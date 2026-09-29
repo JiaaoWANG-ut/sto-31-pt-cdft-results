@@ -258,11 +258,11 @@ cdft = CDFT(
     <div class="two">
       <figure>
         <div class="chart-box"><canvas id="chart-err" height="220"></canvas></div>
-        <figcaption><b>Fig. 1 |</b> Constraint residual |Error| at Δ<i>n</i>&nbsp;=&nbsp;0 (λ&nbsp;=&nbsp;0). Red: wrong <i>Q</i><sub>0</sub>. Black: CDFT-consistent <i>Q</i><sub>0</sub> (near zero; shown ×10<sup>3</sup> for visibility in the paired panel of Table&nbsp;2).</figcaption>
+        <figcaption><b>Fig. 1 |</b> Constraint residual |Error| at Δ<i>n</i>&nbsp;=&nbsp;0 (λ&nbsp;=&nbsp;0). Same <i>y</i>-axis range as Fig.&nbsp;2 (0–60) for direct visual comparison. Red: wrong <i>Q</i><sub>0</sub>. Black: CDFT-consistent <i>Q</i><sub>0</sub> (bars near zero).</figcaption>
       </figure>
       <figure>
         <div class="chart-box"><canvas id="chart-q0" height="220"></canvas></div>
-        <figcaption><b>Fig. 2 |</b> Net charge used as target at Δ<i>n</i>&nbsp;=&nbsp;0. Open red: inconsistent estimate. Filled black: true CDFT <i>Q</i><sub>0</sub> (use this).</figcaption>
+        <figcaption><b>Fig. 2 |</b> Net charge used as target at Δ<i>n</i>&nbsp;=&nbsp;0. Same <i>y</i>-axis as Fig.&nbsp;1 (0–60). Open red: inconsistent estimate. Filled black: true CDFT <i>Q</i><sub>0</sub> (use this).</figcaption>
       </figure>
     </div>
 
@@ -396,8 +396,10 @@ cdft = CDFT(
     charge_coefs=[0.0],           # λ starts at 0; CDFT finds λ
 )`;
 
-      // Fig 1 — error bars
-      const labels = systems.map(s => s.title.replace(', ', '\n'));
+      // Shared y-range for Fig. 1–2 so bar heights are visually comparable
+      const Y_CMP = { min: 0, max: 60 };
+
+      // Fig 1 — error bars (linear, same scale as Fig. 2)
       new Chart(document.getElementById('chart-err'), {
         type: 'bar',
         data: {
@@ -412,7 +414,7 @@ cdft = CDFT(
             },
             {
               label: 'Success Q₀ (CDFT-consistent)',
-              data: systems.map(s => Math.max(s.error_dn0, 1e-4)),
+              data: systems.map(s => s.error_dn0),
               backgroundColor: 'rgba(17,17,17,0.85)',
               borderColor: '#111',
               borderWidth: 1,
@@ -420,14 +422,15 @@ cdft = CDFT(
           ]
         },
         options: {
-          ...axis('', '|Error| at Δn = 0 (e⁻)'),
+          ...axis('', '|Error| / Q₀ scale'),
           scales: {
-            ...axis('', '|Error| at Δn = 0 (e⁻)').scales,
             y: {
-              ...axis('', '|Error| at Δn = 0 (e⁻)').scales.y,
-              type: 'logarithmic',
-              min: 1e-4,
-              title: { display: true, text: '|Error| at Δn = 0 (e⁻, log)', font: { size: 11 }, color: '#111' }
+              min: Y_CMP.min,
+              max: Y_CMP.max,
+              title: { display: true, text: '|Error| at Δn = 0 (e⁻)', font: { size: 11 }, color: '#111' },
+              ticks: { color: '#111', stepSize: 10 },
+              grid: { color: '#e8e8e8' },
+              border: { color: '#111' }
             },
             x: {
               ticks: { color: '#111', maxRotation: 45, minRotation: 30, font: { size: 8 } },
@@ -438,7 +441,7 @@ cdft = CDFT(
         }
       });
 
-      // Fig 2 — Q0 wrong vs true
+      // Fig 2 — Q0 wrong vs true (same y-axis as Fig. 1)
       new Chart(document.getElementById('chart-q0'), {
         type: 'bar',
         data: {
@@ -464,12 +467,12 @@ cdft = CDFT(
           ...axis('', 'Q₀'),
           scales: {
             y: {
+              min: Y_CMP.min,
+              max: Y_CMP.max,
               title: { display: true, text: 'Q₀ (net charge on Pt₆)', font: { size: 11 }, color: '#111' },
-              ticks: { color: '#111' },
+              ticks: { color: '#111', stepSize: 10 },
               grid: { color: '#e8e8e8' },
-              border: { color: '#111' },
-              suggestedMin: 25,
-              suggestedMax: 40,
+              border: { color: '#111' }
             },
             x: {
               ticks: { color: '#111', maxRotation: 45, minRotation: 30, font: { size: 8 } },

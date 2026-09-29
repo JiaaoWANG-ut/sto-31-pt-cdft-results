@@ -141,9 +141,70 @@
       padding: 8pt 6pt 4pt;
       background: #fff;
     }
+    .annotate-bar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: #111;
+      color: #fff;
+      font-size: 10pt;
+      padding: 8pt 12pt;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8pt 14pt;
+      align-items: center;
+      justify-content: space-between;
+      font-family: "Times New Roman", Times, serif;
+    }
+    .annotate-bar a {
+      color: #fff;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .annotate-bar button {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 10pt;
+      background: #fff;
+      color: #111;
+      border: none;
+      padding: 4pt 10pt;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .annotate-bar button:hover { background: #e8e8e8; }
+    .comments-box {
+      border: 1.5px solid var(--rule);
+      background: var(--panel);
+      padding: 12pt 14pt;
+      margin: 16pt 0 8pt;
+    }
+    .comments-box h2 {
+      margin-top: 0;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .comments-box ol { margin: 6pt 0 10pt 18pt; padding: 0; font-size: 10pt; }
+    .comments-box li { margin-bottom: 4pt; }
+    #giscus-thread { margin-top: 10pt; background: #fff; padding: 8pt; border: 1px solid var(--hair); }
   </style>
+  <!-- Hypothesis: select any text → annotate; synced live for all visitors -->
+  <script type="application/json" class="js-hypothesis-config">
+    {
+      "openSidebar": false,
+      "theme": "clean",
+      "enableExperimentalNewNoteButton": true
+    }
+  </script>
+  <script src="https://hypothes.is/embed.js" async></script>
 </head>
 <body>
+  <div class="annotate-bar" role="banner">
+    <span><b>Live annotations</b> — select text on the page, then comment. Synced in real time via Hypothesis (free login).</span>
+    <span style="display:flex;gap:8pt;align-items:center;">
+      <button type="button" id="btn-hypothesis" title="Open Hypothesis sidebar">Open / login to annotate</button>
+      <a href="#comments">Jump to discussion ↓</a>
+    </span>
+  </div>
   <div class="page">
     <header>
       <p class="kicker">SrTiO₃ · Pt cocatalyst · constrained DFT</p>
@@ -223,12 +284,58 @@ cdft = CDFT(
     <p class="cap"><b>Table 3 |</b> Full successful scan.</p>
     <div style="overflow-x:auto;"><table id="full-table"></table></div>
 
+    <section class="comments-box" id="comments">
+      <h2>Comments &amp; annotations</h2>
+      <p style="text-align:left;margin-bottom:6pt;">Two ways to leave feedback (anyone can join):</p>
+      <ol>
+        <li><b>Inline批注 (real-time):</b> click <i>Open / login to annotate</i> in the black bar → create a free <a href="https://hypothes.is/signup" target="_blank" rel="noopener">Hypothesis</a> account (or log in) → select any sentence/figure caption on this page → add a note. Everyone viewing the page sees highlights and notes as they appear.</li>
+        <li><b>Threaded discussion (GitHub login):</b> use the box below (Giscus). Requires the <a href="https://github.com/apps/giscus" target="_blank" rel="noopener">giscus GitHub App</a> installed on <code>JiaaoWANG-ut/sto-31-pt-cdft-results</code> (one-time, by the repo owner).</li>
+      </ol>
+      <div id="giscus-thread">
+        <script src="https://giscus.app/client.js"
+          data-repo="JiaaoWANG-ut/sto-31-pt-cdft-results"
+          data-repo-id="R_kgDOUz0CdA"
+          data-category="General"
+          data-category-id="DIC_kwDOUz0CdM4DGrdD"
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="top"
+          data-theme="light"
+          data-lang="en"
+          data-loading="lazy"
+          crossorigin="anonymous"
+          async>
+        </script>
+      </div>
+      <p class="note" style="margin-top:8pt;">Repo discussion seed: <a href="https://github.com/JiaaoWANG-ut/sto-31-pt-cdft-results/discussions/1">discussions/1</a>. If Giscus shows a setup error, install the app for this repository at giscus.app.</p>
+    </section>
+
     <footer>
       Data: <code>31-Pt-DEDL-CDFT/work/*/q0.json</code>, <code>cdft_scan.csv</code>.
       Failure residuals from first CDFT campaign logs (wrong weight / <i>Q</i><sub>0</sub>).
       Pages: <a href="https://jiaaowang-ut.github.io/sto-31-pt-cdft-results/">jiaaowang-ut.github.io/sto-31-pt-cdft-results</a>
     </footer>
   </div>
+
+  <script>
+    document.getElementById('btn-hypothesis').addEventListener('click', function () {
+      if (window.hypothesisConfig || document.querySelector('hypothesis-sidebar') || window.annotator) {
+        /* Hypothesis exposes guest bridge after load */
+      }
+      var btn = document.querySelector('button[name="sidebar-toggle"], .hypothesis-adder, [data-testid="sidebar-toggle"]');
+      if (window.hypothesis && typeof window.hypothesis.showSidebar === 'function') {
+        window.hypothesis.showSidebar();
+        return;
+      }
+      // Fallback: Hypothesis injects a button in the corner; nudge user
+      alert('Hypothesis is loading. Use the grey < button at the right edge of the page to open the sidebar, then Log in / Sign up to annotate. Or select text after you are logged in.');
+      // Try clicking the Hypothesis bucket if present
+      var bucket = document.querySelector('.hypothesis-adder, .annotator-frame, iframe.hypothesis-sidebar');
+      if (bucket) bucket.click();
+    });
+  </script>
 
   <script>
     const COLORS = ['#111', '#c00000', '#0070c0', '#548235', '#7030a0', '#ed7d31'];

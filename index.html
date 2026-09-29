@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>STO–Pt CDFT · Pt₆ Δn scan</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3d8bfd;
+      --border: #2a3548;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      padding: 2rem 1.5rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem; }
+    .sub { color: var(--muted); font-size: 0.95rem; max-width: 52rem; }
+    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+    .grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+    @media (min-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .card h2 { font-size: 1rem; margin: 0 0 1rem; color: var(--muted); font-weight: 500; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      text-align: right;
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 500; }
+    .q0-table td:first-child { font-weight: 500; }
+    canvas { max-height: 280px; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 2rem 1rem;
+    }
+    code { background: #0a0e14; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>31-Pt-DEDL-CDFT · Pt₆ 约束电荷扫描</h1>
+    <p class="sub">
+      在已弛豫结构上固定几何，GPAW cDFT 约束 6 个 Pt 的净电荷。
+      <code>Q₀</code> 为自然净电荷；扫描 <code>Δn</code> = 在 Pt 上额外增加的电子数（<code>Q_target = Q₀ − Δn</code>）。
+      每个体系 5 点：Δn = 0, 0.5, 1.0, 1.5, 2.0。
+    </p>
+  </header>
+  <main>
+    <section class="card" style="margin-bottom: 1.25rem;">
+      <h2>Q₀（自然条件下 Pt₆ 净电荷）</h2>
+      <table class="q0-table" id="q0-table"></table>
+    </section>
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>cDFT 自由能 E vs Δn（相对 Δn=0，eV）</h2>
+        <canvas id="chart-e"></canvas>
+      </div>
+      <div class="card">
+        <h2>拉格朗日乘子 λ vs Δn（eV）</h2>
+        <canvas id="chart-lam"></canvas>
+      </div>
+    </div>
+    <section class="card" style="margin-top: 1.25rem;">
+      <h2>全部扫描点</h2>
+      <div style="overflow-x: auto;">
+        <table id="full-table"></table>
+      </div>
+    </section>
+  </main>
+  <footer>
+    Data: <code>31-Pt-DEDL-CDFT/work/*/cdft_scan.csv</code> · Generated 2026-09-29
+  </footer>
+  <script>
+    const COLORS = [
+      '#3d8bfd', '#47d17a', '#f0ad4e', '#e85d75', '#a78bfa', '#5cdbd3'
+    ];
+
+    fetch('data.json')
+      .then(r => r.json())
+      .then(({ systems }) => {
+        const q0Html = ['<thead><tr><th>体系</th><th>Q₀</th><th>N_e (Pt)</th><th>Pt 索引</th></tr></thead><tbody>'];
+        systems.forEach(s => {
+          q0Html.push(`<tr><td>${s.title}</td><td>${s.Q0.toFixed(4)}</td><td>${s.Ne0.toFixed(4)}</td><td>${(s.pt_indices || []).join(', ')}</td></tr>`);
+        });
+        q0Html.push('</tbody>');
+        document.getElementById('q0-table').innerHTML = q0Html.join('');
+
+        const labels = systems[0].scan.map(r => r.dn);
+        const chartOpts = {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#8b9cb3' } } },
+          scales: {
+            x: { title: { display: true, text: 'Δn (e⁻ on Pt)', color: '#8b9cb3' }, ticks: { color: '#8b9cb3' }, grid: { color: '#2a3548' } },
+            y: { ticks: { color: '#8b9cb3' }, grid: { color: '#2a3548' } }
+          }
+        };
+
+        new Chart(document.getElementById('chart-e'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: systems.map((s, i) => {
+              const e0 = s.scan.find(r => r.dn === 0).E_cdft;
+              return {
+                label: s.title,
+                data: s.scan.map(r => r.E_cdft - e0),
+                borderColor: COLORS[i % COLORS.length],
+                backgroundColor: COLORS[i % COLORS.length] + '33',
+                tension: 0.15,
+                pointRadius: 4,
+              };
+            })
+          },
+          options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, title: { display: true, text: 'ΔE (eV)', color: '#8b9cb3' } } } }
+        });
+
+        new Chart(document.getElementById('chart-lam'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: systems.map((s, i) => ({
+              label: s.title,
+              data: s.scan.map(r => r.lambda_eV),
+              borderColor: COLORS[i % COLORS.length],
+              tension: 0.15,
+              pointRadius: 4,
+            }))
+          },
+          options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, title: { display: true, text: 'λ (eV)', color: '#8b9cb3' } } } }
+        });
+
+        const rows = [];
+        systems.forEach(s => s.scan.forEach(r => {
+          rows.push({ title: s.title, ...r });
+        }));
+        const cols = ['title', 'dn', 'Q0', 'Q_target', 'Q_achieved', 'lambda_eV', 'E_cdft', 'status'];
+        const head = ['体系', 'Δn', 'Q₀', 'Q_target', 'Q_achieved', 'λ (eV)', 'E_cdft (eV)', 'status'];
+        let t = '<thead><tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+        rows.forEach(r => {
+          t += '<tr>' + cols.map(c => {
+            const v = r[c];
+            if (typeof v === 'number') return `<td>${v.toFixed(4)}</td>`;
+            return `<td>${v}</td>`;
+          }).join('') + '</tr>';
+        });
+        document.getElementById('full-table').innerHTML = t + '</tbody>';
+      })
+      .catch(e => {
+        document.body.innerHTML = '<p style="padding:2rem;color:#e85d75">Failed to load data.json: ' + e + '</p>';
+      });
+  </script>
+</body>
+</html>

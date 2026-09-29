@@ -1,5 +1,5 @@
-# STO–Pt CDFT results (GitHub Pages)
+# Constrained DFT charge response of Pt₆ on SrTiO₃
 
-Static report for the Pt₆ constrained-charge (Δn) scan in `31-Pt-DEDL-CDFT`.
+English Nature-style static report (white background, Times New Roman) for the GPAW CDFT Δ*n* scan in `31-Pt-DEDL-CDFT`.
 
-Open **index.html** locally or use GitHub Pages.
+**Live page:** https://jiaaowang-ut.github.io/sto-31-pt-cdft-results/

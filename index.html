@@ -1,126 +1,246 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>STO–Pt CDFT · Pt₆ Δn scan</title>
+  <title>Constrained DFT charge response of Pt₆ on STO</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg: #0f1419;
-      --card: #1a2332;
-      --text: #e7ecf3;
-      --muted: #8b9cb3;
-      --accent: #3d8bfd;
-      --border: #2a3548;
+      --bg: #ffffff;
+      --text: #000000;
+      --muted: #333333;
+      --rule: #000000;
+      --hairline: #cccccc;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Segoe UI", system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 11pt;
+      line-height: 1.45;
+    }
+    .page {
+      max-width: 180mm;
+      margin: 0 auto;
+      padding: 18mm 14mm 24mm;
     }
     header {
-      padding: 2rem 1.5rem 1rem;
-      max-width: 1100px;
-      margin: 0 auto;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid var(--rule);
+      padding-bottom: 10pt;
+      margin-bottom: 16pt;
     }
-    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem; }
-    .sub { color: var(--muted); font-size: 0.95rem; max-width: 52rem; }
-    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
-    .grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
-    @media (min-width: 900px) {
-      .grid-2 { grid-template-columns: 1fr 1fr; }
+    .journal {
+      font-size: 9pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 0 0 8pt;
+      color: var(--muted);
     }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem;
+    h1 {
+      font-size: 16pt;
+      font-weight: bold;
+      margin: 0 0 8pt;
+      line-height: 1.25;
     }
-    .card h2 { font-size: 1rem; margin: 0 0 1rem; color: var(--muted); font-weight: 500; }
+    .authors {
+      font-size: 10pt;
+      margin: 0 0 6pt;
+    }
+    .abstract-label {
+      font-weight: bold;
+      font-style: italic;
+    }
+    .abstract {
+      font-size: 10pt;
+      text-align: justify;
+      margin: 0;
+    }
+    h2 {
+      font-size: 11pt;
+      font-weight: bold;
+      margin: 18pt 0 8pt;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 3pt;
+    }
+    h3 {
+      font-size: 10.5pt;
+      font-weight: bold;
+      font-style: italic;
+      margin: 12pt 0 6pt;
+    }
+    p { margin: 0 0 8pt; text-align: justify; }
+    .note { font-size: 9pt; color: var(--muted); margin-bottom: 10pt; }
+    figure {
+      margin: 14pt 0 18pt;
+      page-break-inside: avoid;
+    }
+    figcaption {
+      font-size: 9pt;
+      margin-top: 6pt;
+      text-align: justify;
+    }
+    figcaption .fig-label {
+      font-weight: bold;
+    }
+    canvas {
+      width: 100% !important;
+      max-height: 260px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 9pt;
+      margin: 8pt 0 4pt;
     }
-    th, td {
+    thead th {
+      border-top: 1.5pt solid var(--rule);
+      border-bottom: 0.75pt solid var(--rule);
+      font-weight: bold;
+      padding: 4pt 5pt;
       text-align: right;
-      padding: 0.45rem 0.6rem;
-      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
     }
-    th:first-child, td:first-child { text-align: left; }
-    th { color: var(--muted); font-weight: 500; }
-    .q0-table td:first-child { font-weight: 500; }
-    canvas { max-height: 280px; }
+    thead th:first-child { text-align: left; }
+    tbody td {
+      border-bottom: 0.5pt solid var(--hairline);
+      padding: 3.5pt 5pt;
+      text-align: right;
+      white-space: nowrap;
+    }
+    tbody td:first-child { text-align: left; }
+    tbody tr:last-child td {
+      border-bottom: 1.5pt solid var(--rule);
+    }
+    .table-caption {
+      font-size: 9pt;
+      margin: 12pt 0 4pt;
+      text-align: justify;
+    }
+    .table-caption .tbl-label { font-weight: bold; }
     footer {
-      text-align: center;
+      margin-top: 22pt;
+      padding-top: 8pt;
+      border-top: 1px solid var(--rule);
+      font-size: 8.5pt;
       color: var(--muted);
-      font-size: 0.8rem;
-      padding: 2rem 1rem;
     }
-    code { background: #0a0e14; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.85em; }
+    code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.92em;
+    }
+    .two-col {
+      display: grid;
+      gap: 14pt;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 700px) {
+      .two-col { grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>31-Pt-DEDL-CDFT · Pt₆ 约束电荷扫描</h1>
-    <p class="sub">
-      在已弛豫结构上固定几何，GPAW cDFT 约束 6 个 Pt 的净电荷。
-      <code>Q₀</code> 为自然净电荷；扫描 <code>Δn</code> = 在 Pt 上额外增加的电子数（<code>Q_target = Q₀ − Δn</code>）。
-      每个体系 5 点：Δn = 0, 0.5, 1.0, 1.5, 2.0。
+  <div class="page">
+    <header>
+      <p class="journal">STO · Pt cocatalyst · constrained DFT</p>
+      <h1>Electron enrichment of interfacial Pt<sub>6</sub> clusters on SrTiO<sub>3</sub> from constrained density-functional theory</h1>
+      <p class="authors">Fixed-geometry CDFT charge scan (GPAW) · report generated 29 September 2026</p>
+      <p class="abstract"><span class="abstract-label">Abstract.</span>
+        Constrained DFT (CDFT) is used to add a controlled excess of electrons to the six-atom Pt region on relaxed SrTiO<sub>3</sub>–Pt models (pristine and interfacial oxygen vacancy; vacuum, water, and KOH environments).
+        The natural CDFT charge of Pt<sub>6</sub>, <i>Q</i><sub>0</sub>, is measured for each structure; the net charge is then scanned as <i>Q</i> = <i>Q</i><sub>0</sub> − Δ<i>n</i> with Δ<i>n</i> = 0, 0.5, 1.0, 1.5 and 2.0.
+        At Δ<i>n</i> = 0 the Lagrange multiplier vanishes and CDFT recovers unconstrained DFT.
+        Energies and multipliers as a function of Δ<i>n</i> quantify the cost of storing excess charge on Pt.
+      </p>
+    </header>
+
+    <h2>Methods (brief)</h2>
+    <p>
+      Geometries were taken from prior PBE+U(Ti) / DFT-D3 relaxations (<i>f</i><sub>max</sub> = 0.05&nbsp;eV&nbsp;Å<sup>−1</sup>).
+      CDFT calculations used GPAW (finite-difference, <i>h</i> = 0.15&nbsp;Å, spin-polarized, dipole correction) with a Hirshfeld-style weight on the six Pt atoms.
+      The constraint is the ionic net charge <i>Q</i> = <i>Z</i> − <i>N</i><sub>e</sub> on that region; Δ<i>n</i> is the number of extra electrons relative to the unconstrained ground state.
+      The total slab remains charge-neutral: excess electrons on Pt are drawn from the oxide / solvent region.
     </p>
-  </header>
-  <main>
-    <section class="card" style="margin-bottom: 1.25rem;">
-      <h2>Q₀（自然条件下 Pt₆ 净电荷）</h2>
-      <table class="q0-table" id="q0-table"></table>
-    </section>
-    <div class="grid grid-2">
-      <div class="card">
-        <h2>cDFT 自由能 E vs Δn（相对 Δn=0，eV）</h2>
+
+    <p class="table-caption"><span class="tbl-label">Table 1 |</span> Unconstrained CDFT net charge <i>Q</i><sub>0</sub> of the Pt<sub>6</sub> region.</p>
+    <table id="q0-table"></table>
+    <p class="note">Positive <i>Q</i><sub>0</sub> indicates electron deficiency relative to the nuclear charge of Pt<sub>6</sub> within the CDFT weight (not a Bader oxidation state).</p>
+
+    <h2>Results</h2>
+    <div class="two-col">
+      <figure>
         <canvas id="chart-e"></canvas>
-      </div>
-      <div class="card">
-        <h2>拉格朗日乘子 λ vs Δn（eV）</h2>
+        <figcaption><span class="fig-label">Fig. 1 |</span> Relative CDFT free energy Δ<i>E</i> = <i>E</i>(Δ<i>n</i>) − <i>E</i>(0) versus excess electrons Δ<i>n</i> on Pt<sub>6</sub>.</figcaption>
+      </figure>
+      <figure>
         <canvas id="chart-lam"></canvas>
-      </div>
+        <figcaption><span class="fig-label">Fig. 2 |</span> Charge constraint Lagrange multiplier <i>λ</i> versus Δ<i>n</i>. At Δ<i>n</i> = 0, <i>λ</i> = 0 for all systems.</figcaption>
+      </figure>
     </div>
-    <section class="card" style="margin-top: 1.25rem;">
-      <h2>全部扫描点</h2>
-      <div style="overflow-x: auto;">
-        <table id="full-table"></table>
-      </div>
-    </section>
-  </main>
-  <footer>
-    Data: <code>31-Pt-DEDL-CDFT/work/*/cdft_scan.csv</code> · Generated 2026-09-29
-  </footer>
+
+    <p class="table-caption"><span class="tbl-label">Table 2 |</span> Full CDFT scan: target and achieved charges, multiplier and energy.</p>
+    <div style="overflow-x:auto;">
+      <table id="full-table"></table>
+    </div>
+
+    <footer>
+      Source data: <code>31-Pt-DEDL-CDFT/work/*/cdft_scan.csv</code>, <code>q0.json</code>.
+      Repository: <a href="https://github.com/JiaaoWANG-ut/sto-31-pt-cdft-results">JiaaoWANG-ut/sto-31-pt-cdft-results</a>.
+    </footer>
+  </div>
+
   <script>
-    const COLORS = [
-      '#3d8bfd', '#47d17a', '#f0ad4e', '#e85d75', '#a78bfa', '#5cdbd3'
-    ];
+    const COLORS = ['#000000', '#c00000', '#0070c0', '#548235', '#7030a0', '#ed7d31'];
+    const DASHES = [[], [4, 3], [2, 2], [6, 2, 2, 2], [8, 3], [1, 2]];
+
+    Chart.defaults.font.family = '"Times New Roman", Times, serif';
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#000';
 
     fetch('data.json')
       .then(r => r.json())
       .then(({ systems }) => {
-        const q0Html = ['<thead><tr><th>体系</th><th>Q₀</th><th>N_e (Pt)</th><th>Pt 索引</th></tr></thead><tbody>'];
+        // Nature-style English titles
+        const titles = {
+          'pristine-vacuum': 'Pristine, vacuum',
+          'pristine-water': 'Pristine, H₂O',
+          'pristine-koh': 'Pristine, KOH',
+          'Vo-interface-vacuum': 'Vo interface, vacuum',
+          'Vo-interface-water': 'Vo interface, H₂O',
+          'Vo-interface-koh': 'Vo interface, KOH',
+        };
+        systems.forEach(s => { s.title = titles[s.id] || s.title; });
+
+        const q0Html = ['<thead><tr><th>System</th><th><i>Q</i><sub>0</sub></th><th><i>N</i><sub>e</sub></th><th><i>Z</i></th></tr></thead><tbody>'];
         systems.forEach(s => {
-          q0Html.push(`<tr><td>${s.title}</td><td>${s.Q0.toFixed(4)}</td><td>${s.Ne0.toFixed(4)}</td><td>${(s.pt_indices || []).join(', ')}</td></tr>`);
+          q0Html.push(`<tr><td>${s.title}</td><td>${s.Q0.toFixed(3)}</td><td>${s.Ne0.toFixed(3)}</td><td>${s.Z.toFixed(0)}</td></tr>`);
         });
         q0Html.push('</tbody>');
         document.getElementById('q0-table').innerHTML = q0Html.join('');
 
         const labels = systems[0].scan.map(r => r.dn);
-        const chartOpts = {
+        const axisOpts = {
           responsive: true,
-          plugins: { legend: { labels: { color: '#8b9cb3' } } },
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 18, font: { size: 9 }, color: '#000' }
+            }
+          },
           scales: {
-            x: { title: { display: true, text: 'Δn (e⁻ on Pt)', color: '#8b9cb3' }, ticks: { color: '#8b9cb3' }, grid: { color: '#2a3548' } },
-            y: { ticks: { color: '#8b9cb3' }, grid: { color: '#2a3548' } }
+            x: {
+              title: { display: true, text: 'Δn (e⁻ on Pt₆)', font: { size: 11 }, color: '#000' },
+              ticks: { color: '#000' },
+              grid: { color: '#e0e0e0' },
+              border: { color: '#000' }
+            },
+            y: {
+              ticks: { color: '#000' },
+              grid: { color: '#e0e0e0' },
+              border: { color: '#000' }
+            }
           }
         };
 
@@ -132,15 +252,27 @@
               const e0 = s.scan.find(r => r.dn === 0).E_cdft;
               return {
                 label: s.title,
-                data: s.scan.map(r => r.E_cdft - e0),
+                data: s.scan.map(r => +(r.E_cdft - e0).toFixed(4)),
                 borderColor: COLORS[i % COLORS.length],
-                backgroundColor: COLORS[i % COLORS.length] + '33',
-                tension: 0.15,
-                pointRadius: 4,
+                backgroundColor: 'transparent',
+                borderDash: DASHES[i % DASHES.length],
+                borderWidth: 1.5,
+                tension: 0,
+                pointRadius: 3,
+                pointBackgroundColor: COLORS[i % COLORS.length],
               };
             })
           },
-          options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, title: { display: true, text: 'ΔE (eV)', color: '#8b9cb3' } } } }
+          options: {
+            ...axisOpts,
+            scales: {
+              ...axisOpts.scales,
+              y: {
+                ...axisOpts.scales.y,
+                title: { display: true, text: 'ΔE (eV)', font: { size: 11 }, color: '#000' }
+              }
+            }
+          }
         });
 
         new Chart(document.getElementById('chart-lam'), {
@@ -149,33 +281,45 @@
             labels,
             datasets: systems.map((s, i) => ({
               label: s.title,
-              data: s.scan.map(r => r.lambda_eV),
+              data: s.scan.map(r => +r.lambda_eV.toFixed(4)),
               borderColor: COLORS[i % COLORS.length],
-              tension: 0.15,
-              pointRadius: 4,
+              backgroundColor: 'transparent',
+              borderDash: DASHES[i % DASHES.length],
+              borderWidth: 1.5,
+              tension: 0,
+              pointRadius: 3,
+              pointBackgroundColor: COLORS[i % COLORS.length],
             }))
           },
-          options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, title: { display: true, text: 'λ (eV)', color: '#8b9cb3' } } } }
+          options: {
+            ...axisOpts,
+            scales: {
+              ...axisOpts.scales,
+              y: {
+                ...axisOpts.scales.y,
+                title: { display: true, text: 'λ (eV)', font: { size: 11 }, color: '#000' }
+              }
+            }
+          }
         });
 
-        const rows = [];
-        systems.forEach(s => s.scan.forEach(r => {
-          rows.push({ title: s.title, ...r });
-        }));
-        const cols = ['title', 'dn', 'Q0', 'Q_target', 'Q_achieved', 'lambda_eV', 'E_cdft', 'status'];
-        const head = ['体系', 'Δn', 'Q₀', 'Q_target', 'Q_achieved', 'λ (eV)', 'E_cdft (eV)', 'status'];
+        const head = ['System', 'Δn', '<i>Q</i><sub>0</sub>', '<i>Q</i><sub>target</sub>', '<i>Q</i><sub>ach.</sub>', 'λ (eV)', '<i>E</i><sub>CDFT</sub> (eV)'];
+        const keys = ['title', 'dn', 'Q0', 'Q_target', 'Q_achieved', 'lambda_eV', 'E_cdft'];
         let t = '<thead><tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
-        rows.forEach(r => {
-          t += '<tr>' + cols.map(c => {
-            const v = r[c];
-            if (typeof v === 'number') return `<td>${v.toFixed(4)}</td>`;
-            return `<td>${v}</td>`;
-          }).join('') + '</tr>';
-        });
+        systems.forEach(s => s.scan.forEach(r => {
+          t += '<tr>';
+          keys.forEach(c => {
+            const v = c === 'title' ? s.title : r[c];
+            if (typeof v === 'number') t += `<td>${v.toFixed(4)}</td>`;
+            else t += `<td>${v}</td>`;
+          });
+          t += '</tr>';
+        }));
         document.getElementById('full-table').innerHTML = t + '</tbody>';
       })
       .catch(e => {
-        document.body.innerHTML = '<p style="padding:2rem;color:#e85d75">Failed to load data.json: ' + e + '</p>';
+        document.querySelector('.page').innerHTML =
+          '<p style="color:#c00000">Failed to load data.json: ' + e + '</p>';
       });
   </script>
 </body>

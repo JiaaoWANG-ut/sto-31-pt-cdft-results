@@ -3,123 +3,131 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Constrained DFT charge response of Pt₆ on STO</title>
+  <title>Constrained DFT: safely adding electrons to Pt₆ on STO</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg: #ffffff;
-      --text: #000000;
-      --muted: #333333;
-      --rule: #000000;
-      --hairline: #cccccc;
+      --bg: #fff;
+      --ink: #111;
+      --muted: #444;
+      --rule: #111;
+      --hair: #ccc;
+      --ok: #1a7f37;
+      --bad: #cf222e;
+      --panel: #f6f4ef;
+      --codebg: #f0eee6;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       background: var(--bg);
-      color: var(--text);
+      color: var(--ink);
       font-family: "Times New Roman", Times, serif;
       font-size: 11pt;
       line-height: 1.45;
     }
-    .page {
-      max-width: 180mm;
-      margin: 0 auto;
-      padding: 18mm 14mm 24mm;
-    }
+    .page { max-width: 190mm; margin: 0 auto; padding: 16mm 12mm 28mm; }
     header {
-      border-bottom: 2px solid var(--rule);
-      padding-bottom: 10pt;
+      border-bottom: 2.5px solid var(--rule);
+      padding-bottom: 12pt;
       margin-bottom: 16pt;
     }
-    .journal {
-      font-size: 9pt;
-      letter-spacing: 0.08em;
+    .kicker {
+      font-size: 8.5pt;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      margin: 0 0 8pt;
       color: var(--muted);
+      margin: 0 0 8pt;
     }
     h1 {
-      font-size: 16pt;
+      font-size: 17pt;
       font-weight: bold;
       margin: 0 0 8pt;
-      line-height: 1.25;
+      line-height: 1.22;
     }
-    .authors {
-      font-size: 10pt;
-      margin: 0 0 6pt;
-    }
-    .abstract-label {
-      font-weight: bold;
-      font-style: italic;
-    }
-    .abstract {
-      font-size: 10pt;
-      text-align: justify;
-      margin: 0;
-    }
+    .meta { font-size: 10pt; color: var(--muted); margin: 0 0 8pt; }
+    .abstract { font-size: 10pt; text-align: justify; margin: 0; }
+    .abstract b { font-style: italic; }
     h2 {
-      font-size: 11pt;
+      font-size: 12pt;
       font-weight: bold;
-      margin: 18pt 0 8pt;
+      margin: 20pt 0 8pt;
       border-bottom: 1px solid var(--rule);
       padding-bottom: 3pt;
     }
-    h3 {
-      font-size: 10.5pt;
-      font-weight: bold;
-      font-style: italic;
-      margin: 12pt 0 6pt;
-    }
     p { margin: 0 0 8pt; text-align: justify; }
-    .note { font-size: 9pt; color: var(--muted); margin-bottom: 10pt; }
-    figure {
-      margin: 14pt 0 18pt;
-      page-break-inside: avoid;
+    .howto {
+      background: var(--panel);
+      border: 1.5px solid var(--rule);
+      padding: 12pt 14pt;
+      margin: 12pt 0 16pt;
     }
+    .howto h3 {
+      margin: 0 0 6pt;
+      font-size: 11.5pt;
+      font-style: italic;
+    }
+    .howto .eq {
+      font-size: 13pt;
+      text-align: center;
+      margin: 10pt 0;
+      font-weight: bold;
+    }
+    pre {
+      background: var(--codebg);
+      border: 1px solid var(--hair);
+      padding: 10pt 12pt;
+      overflow-x: auto;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 9pt;
+      line-height: 1.4;
+      margin: 8pt 0 0;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 8.5pt;
+      font-family: "Times New Roman", Times, serif;
+      font-weight: bold;
+      padding: 1pt 6pt;
+      border: 1px solid;
+      margin-right: 4pt;
+    }
+    .badge.ok { color: var(--ok); border-color: var(--ok); }
+    .badge.bad { color: var(--bad); border-color: var(--bad); }
+    figure { margin: 14pt 0 4pt; }
     figcaption {
       font-size: 9pt;
-      margin-top: 6pt;
       text-align: justify;
+      margin-top: 6pt;
     }
-    figcaption .fig-label {
-      font-weight: bold;
-    }
-    canvas {
-      width: 100% !important;
-      max-height: 260px;
-    }
+    figcaption b { font-weight: bold; }
+    .two { display: grid; gap: 16pt; grid-template-columns: 1fr; }
+    @media (min-width: 720px) { .two { grid-template-columns: 1fr 1fr; } }
+    canvas { width: 100% !important; max-height: 300px; }
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 9pt;
-      margin: 8pt 0 4pt;
+      margin: 6pt 0 10pt;
     }
     thead th {
-      border-top: 1.5pt solid var(--rule);
+      border-top: 1.75pt solid var(--rule);
       border-bottom: 0.75pt solid var(--rule);
-      font-weight: bold;
       padding: 4pt 5pt;
       text-align: right;
       white-space: nowrap;
     }
-    thead th:first-child { text-align: left; }
+    thead th:first-child, tbody td:first-child { text-align: left; }
     tbody td {
-      border-bottom: 0.5pt solid var(--hairline);
+      border-bottom: 0.5pt solid var(--hair);
       padding: 3.5pt 5pt;
       text-align: right;
       white-space: nowrap;
     }
-    tbody td:first-child { text-align: left; }
-    tbody tr:last-child td {
-      border-bottom: 1.5pt solid var(--rule);
-    }
-    .table-caption {
-      font-size: 9pt;
-      margin: 12pt 0 4pt;
-      text-align: justify;
-    }
-    .table-caption .tbl-label { font-weight: bold; }
+    tbody tr:last-child td { border-bottom: 1.75pt solid var(--rule); }
+    .cap { font-size: 9pt; margin: 12pt 0 4pt; text-align: justify; }
+    .cap b { font-weight: bold; }
+    .note { font-size: 8.5pt; color: var(--muted); margin: 0 0 10pt; }
     footer {
       margin-top: 22pt;
       padding-top: 8pt;
@@ -127,200 +135,323 @@
       font-size: 8.5pt;
       color: var(--muted);
     }
-    code {
-      font-family: "Courier New", Courier, monospace;
-      font-size: 0.92em;
-    }
-    .two-col {
-      display: grid;
-      gap: 14pt;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 700px) {
-      .two-col { grid-template-columns: 1fr 1fr; }
+    code { font-family: "Courier New", Courier, monospace; font-size: 0.92em; }
+    .chart-box {
+      border: 1px solid var(--hair);
+      padding: 8pt 6pt 4pt;
+      background: #fff;
     }
   </style>
 </head>
 <body>
   <div class="page">
     <header>
-      <p class="journal">STO · Pt cocatalyst · constrained DFT</p>
-      <h1>Electron enrichment of interfacial Pt<sub>6</sub> clusters on SrTiO<sub>3</sub> from constrained density-functional theory</h1>
-      <p class="authors">Fixed-geometry CDFT charge scan (GPAW) · report generated 29 September 2026</p>
-      <p class="abstract"><span class="abstract-label">Abstract.</span>
-        Constrained DFT (CDFT) is used to add a controlled excess of electrons to the six-atom Pt region on relaxed SrTiO<sub>3</sub>–Pt models (pristine and interfacial oxygen vacancy; vacuum, water, and KOH environments).
-        The natural CDFT charge of Pt<sub>6</sub>, <i>Q</i><sub>0</sub>, is measured for each structure; the net charge is then scanned as <i>Q</i> = <i>Q</i><sub>0</sub> − Δ<i>n</i> with Δ<i>n</i> = 0, 0.5, 1.0, 1.5 and 2.0.
-        At Δ<i>n</i> = 0 the Lagrange multiplier vanishes and CDFT recovers unconstrained DFT.
-        Energies and multipliers as a function of Δ<i>n</i> quantify the cost of storing excess charge on Pt.
+      <p class="kicker">SrTiO₃ · Pt cocatalyst · constrained DFT</p>
+      <h1>How to add electrons safely to interfacial Pt<sub>6</sub>: measuring <i>Q</i><sub>0</sub> first, then setting <i>Q</i>&nbsp;=&nbsp;<i>Q</i><sub>0</sub>&nbsp;−&nbsp;Δ<i>n</i></h1>
+      <p class="meta">GPAW CDFT fixed-geometry scan · updated 29 September 2026</p>
+      <p class="abstract"><b>Abstract.</b>
+        Extra electrons on Pt are imposed with GPAW CDFT by constraining the Pt<sub>6</sub> net charge
+        <i>Q</i>&nbsp;=&nbsp;<i>Z</i>&nbsp;−&nbsp;<i>N</i><sub>e</sub>.
+        The only number that must be measured and then written into the input is the unconstrained charge
+        <i>Q</i><sub>0</sub>. Targets are then <i>Q</i>&nbsp;=&nbsp;<i>Q</i><sub>0</sub>&nbsp;−&nbsp;Δ<i>n</i>.
+        An incorrect <i>Q</i><sub>0</sub> (inconsistent CDFT weight) left residuals of ~17–54&nbsp;e<sup>−</sup> already at Δ<i>n</i>&nbsp;=&nbsp;0 and mostly crashed;
+        the corrected protocol gives λ(0)&nbsp;=&nbsp;0 and a complete Δ<i>n</i>&nbsp;=&nbsp;0→2 scan for all six models.
       </p>
     </header>
 
-    <h2>Methods (brief)</h2>
+    <div class="howto" id="howto">
+      <h3>What to put in the code after <i>Q</i><sub>0</sub> is measured</h3>
+      <p style="margin:0;text-align:left;">
+        <span class="badge ok">DO</span> set the CDFT <code>charges</code> list to the target net charge on Pt<sub>6</sub>.
+        <span class="badge bad">DO NOT</span> paste <i>λ</i> into the input — <i>λ</i> is optimized by CDFT, not a user parameter.
+      </p>
+      <div class="eq"><i>Q</i><sub>target</sub> = <i>Q</i><sub>0</sub> − Δ<i>n</i></div>
+      <p style="margin:0;text-align:left;font-size:10pt;">
+        Example: pristine vacuum, add 1 electron →
+        <code>charges = [34.598857 − 1.0]</code> → <code>charges = [33.598857]</code>.
+      </p>
+      <pre id="code-snippet"># After q0.json is written for a given structure:
+Q0 = 34.598857          # from work/<label>/q0.json  →  field "Q"
+dn = 1.0                # extra electrons on Pt6 (your choice)
+cdft = CDFT(
+    calc=calc,
+    atoms=atoms,
+    charge_regions=[pt_indices],   # the six Pt atoms
+    charges=[Q0 - dn],             # ← this is the number to set
+    charge_coefs=[0.0],            # λ starts at 0; CDFT finds λ
+    ...
+)</pre>
+    </div>
+
+    <p class="cap"><b>Table 1 |</b> Per-system <i>Q</i><sub>0</sub> to copy into <code>charges = [Q0 − Δn]</code>.</p>
+    <table id="q0-copy"></table>
+    <p class="note">Use the same GPAW CDFT weight (default Rc/μ) for measuring <i>Q</i><sub>0</sub> and for the constrained run. Do not mix a hand-rolled weight with CDFT.</p>
+
+    <h2>Failure versus success of <i>Q</i><sub>0</sub></h2>
     <p>
-      Geometries were taken from prior PBE+U(Ti) / DFT-D3 relaxations (<i>f</i><sub>max</sub> = 0.05&nbsp;eV&nbsp;Å<sup>−1</sup>).
-      CDFT calculations used GPAW (finite-difference, <i>h</i> = 0.15&nbsp;Å, spin-polarized, dipole correction) with a Hirshfeld-style weight on the six Pt atoms.
-      The constraint is the ionic net charge <i>Q</i> = <i>Z</i> − <i>N</i><sub>e</sub> on that region; Δ<i>n</i> is the number of extra electrons relative to the unconstrained ground state.
-      The total slab remains charge-neutral: excess electrons on Pt are drawn from the oxide / solvent region.
+      Round&nbsp;1 estimated <i>Q</i><sub>0</sub> with a homemade weight integral that did not match GPAW CDFT.
+      At Δ<i>n</i>&nbsp;=&nbsp;0 the constraint residual was already ~17&nbsp;e<sup>−</sup> (vacuum) or ~51–54&nbsp;e<sup>−</sup> (H<sub>2</sub>O/KOH), so SCF mostly failed.
+      Round&nbsp;2 measures <i>Q</i><sub>0</sub> with CDFT itself (λ&nbsp;=&nbsp;0 probe); residuals at Δ<i>n</i>&nbsp;=&nbsp;0 fall to ~10<sup>−4</sup>&nbsp;e<sup>−</sup> and λ&nbsp;=&nbsp;0.
     </p>
 
-    <p class="table-caption"><span class="tbl-label">Table 1 |</span> Unconstrained CDFT net charge <i>Q</i><sub>0</sub> of the Pt<sub>6</sub> region.</p>
-    <table id="q0-table"></table>
-    <p class="note">Positive <i>Q</i><sub>0</sub> indicates electron deficiency relative to the nuclear charge of Pt<sub>6</sub> within the CDFT weight (not a Bader oxidation state).</p>
-
-    <h2>Results</h2>
-    <div class="two-col">
+    <div class="two">
       <figure>
-        <canvas id="chart-e"></canvas>
-        <figcaption><span class="fig-label">Fig. 1 |</span> Relative CDFT free energy Δ<i>E</i> = <i>E</i>(Δ<i>n</i>) − <i>E</i>(0) versus excess electrons Δ<i>n</i> on Pt<sub>6</sub>.</figcaption>
+        <div class="chart-box"><canvas id="chart-err" height="220"></canvas></div>
+        <figcaption><b>Fig. 1 |</b> Constraint residual |Error| at Δ<i>n</i>&nbsp;=&nbsp;0 (λ&nbsp;=&nbsp;0). Red: wrong <i>Q</i><sub>0</sub>. Black: CDFT-consistent <i>Q</i><sub>0</sub> (near zero; shown ×10<sup>3</sup> for visibility in the paired panel of Table&nbsp;2).</figcaption>
       </figure>
       <figure>
-        <canvas id="chart-lam"></canvas>
-        <figcaption><span class="fig-label">Fig. 2 |</span> Charge constraint Lagrange multiplier <i>λ</i> versus Δ<i>n</i>. At Δ<i>n</i> = 0, <i>λ</i> = 0 for all systems.</figcaption>
+        <div class="chart-box"><canvas id="chart-q0" height="220"></canvas></div>
+        <figcaption><b>Fig. 2 |</b> Net charge used as target at Δ<i>n</i>&nbsp;=&nbsp;0. Open red: inconsistent estimate. Filled black: true CDFT <i>Q</i><sub>0</sub> (use this).</figcaption>
       </figure>
     </div>
 
-    <p class="table-caption"><span class="tbl-label">Table 2 |</span> Full CDFT scan: target and achieved charges, multiplier and energy.</p>
-    <div style="overflow-x:auto;">
-      <table id="full-table"></table>
+    <p class="cap"><b>Table 2 |</b> Head-to-head <i>Q</i><sub>0</sub> diagnostics.</p>
+    <table id="cmp-table"></table>
+
+    <h2>Successful Δ<i>n</i> scan (after correct <i>Q</i><sub>0</sub>)</h2>
+    <div class="two">
+      <figure>
+        <div class="chart-box"><canvas id="chart-e" height="240"></canvas></div>
+        <figcaption><b>Fig. 3 |</b> Relative CDFT free energy Δ<i>E</i>&nbsp;=&nbsp;<i>E</i>(Δ<i>n</i>)&nbsp;−&nbsp;<i>E</i>(0). Vacuum costs ~8&nbsp;eV at Δ<i>n</i>&nbsp;=&nbsp;2; aqueous/KOH ~6&nbsp;eV.</figcaption>
+      </figure>
+      <figure>
+        <div class="chart-box"><canvas id="chart-lam" height="240"></canvas></div>
+        <figcaption><b>Fig. 4 |</b> Lagrange multiplier <i>λ</i>(Δ<i>n</i>). Output of CDFT, not an input. λ(0)&nbsp;=&nbsp;0 for all six systems.</figcaption>
+      </figure>
     </div>
+
+    <p class="cap"><b>Table 3 |</b> Full successful scan.</p>
+    <div style="overflow-x:auto;"><table id="full-table"></table></div>
 
     <footer>
-      Source data: <code>31-Pt-DEDL-CDFT/work/*/cdft_scan.csv</code>, <code>q0.json</code>.
-      Repository: <a href="https://github.com/JiaaoWANG-ut/sto-31-pt-cdft-results">JiaaoWANG-ut/sto-31-pt-cdft-results</a>.
+      Data: <code>31-Pt-DEDL-CDFT/work/*/q0.json</code>, <code>cdft_scan.csv</code>.
+      Failure residuals from first CDFT campaign logs (wrong weight / <i>Q</i><sub>0</sub>).
+      Pages: <a href="https://jiaaowang-ut.github.io/sto-31-pt-cdft-results/">jiaaowang-ut.github.io/sto-31-pt-cdft-results</a>
     </footer>
   </div>
 
   <script>
-    const COLORS = ['#000000', '#c00000', '#0070c0', '#548235', '#7030a0', '#ed7d31'];
-    const DASHES = [[], [4, 3], [2, 2], [6, 2, 2, 2], [8, 3], [1, 2]];
-
+    const COLORS = ['#111', '#c00000', '#0070c0', '#548235', '#7030a0', '#ed7d31'];
+    const DASHES = [[], [5, 3], [2, 2], [6, 2, 2, 2], [8, 3], [1, 2]];
     Chart.defaults.font.family = '"Times New Roman", Times, serif';
     Chart.defaults.font.size = 11;
-    Chart.defaults.color = '#000';
+    Chart.defaults.color = '#111';
 
-    fetch('data.json')
-      .then(r => r.json())
-      .then(({ systems }) => {
-        // Nature-style English titles
-        const titles = {
-          'pristine-vacuum': 'Pristine, vacuum',
-          'pristine-water': 'Pristine, H₂O',
-          'pristine-koh': 'Pristine, KOH',
-          'Vo-interface-vacuum': 'Vo interface, vacuum',
-          'Vo-interface-water': 'Vo interface, H₂O',
-          'Vo-interface-koh': 'Vo interface, KOH',
-        };
-        systems.forEach(s => { s.title = titles[s.id] || s.title; });
+    const axis = (xTitle, yTitle) => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { boxWidth: 16, font: { size: 9 }, color: '#111', padding: 8 }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: xTitle, font: { size: 11 }, color: '#111' },
+          ticks: { color: '#111' },
+          grid: { color: '#e8e8e8' },
+          border: { color: '#111' }
+        },
+        y: {
+          title: { display: true, text: yTitle, font: { size: 11 }, color: '#111' },
+          ticks: { color: '#111' },
+          grid: { color: '#e8e8e8' },
+          border: { color: '#111' }
+        }
+      }
+    });
 
-        const q0Html = ['<thead><tr><th>System</th><th><i>Q</i><sub>0</sub></th><th><i>N</i><sub>e</sub></th><th><i>Z</i></th></tr></thead><tbody>'];
-        systems.forEach(s => {
-          q0Html.push(`<tr><td>${s.title}</td><td>${s.Q0.toFixed(3)}</td><td>${s.Ne0.toFixed(3)}</td><td>${s.Z.toFixed(0)}</td></tr>`);
-        });
-        q0Html.push('</tbody>');
-        document.getElementById('q0-table').innerHTML = q0Html.join('');
+    fetch('data.json').then(r => r.json()).then(data => {
+      const systems = data.systems;
+      const fail = data.q0_comparison.failure;
+      const howto = data.howto;
 
-        const labels = systems[0].scan.map(r => r.dn);
-        const axisOpts = {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: { boxWidth: 18, font: { size: 9 }, color: '#000' }
-            }
-          },
-          scales: {
-            x: {
-              title: { display: true, text: 'Δn (e⁻ on Pt₆)', font: { size: 11 }, color: '#000' },
-              ticks: { color: '#000' },
-              grid: { color: '#e0e0e0' },
-              border: { color: '#000' }
-            },
-            y: {
-              ticks: { color: '#000' },
-              grid: { color: '#e0e0e0' },
-              border: { color: '#000' }
-            }
-          }
-        };
-
-        new Chart(document.getElementById('chart-e'), {
-          type: 'line',
-          data: {
-            labels,
-            datasets: systems.map((s, i) => {
-              const e0 = s.scan.find(r => r.dn === 0).E_cdft;
-              return {
-                label: s.title,
-                data: s.scan.map(r => +(r.E_cdft - e0).toFixed(4)),
-                borderColor: COLORS[i % COLORS.length],
-                backgroundColor: 'transparent',
-                borderDash: DASHES[i % DASHES.length],
-                borderWidth: 1.5,
-                tension: 0,
-                pointRadius: 3,
-                pointBackgroundColor: COLORS[i % COLORS.length],
-              };
-            })
-          },
-          options: {
-            ...axisOpts,
-            scales: {
-              ...axisOpts.scales,
-              y: {
-                ...axisOpts.scales.y,
-                title: { display: true, text: 'ΔE (eV)', font: { size: 11 }, color: '#000' }
-              }
-            }
-          }
-        });
-
-        new Chart(document.getElementById('chart-lam'), {
-          type: 'line',
-          data: {
-            labels,
-            datasets: systems.map((s, i) => ({
-              label: s.title,
-              data: s.scan.map(r => +r.lambda_eV.toFixed(4)),
-              borderColor: COLORS[i % COLORS.length],
-              backgroundColor: 'transparent',
-              borderDash: DASHES[i % DASHES.length],
-              borderWidth: 1.5,
-              tension: 0,
-              pointRadius: 3,
-              pointBackgroundColor: COLORS[i % COLORS.length],
-            }))
-          },
-          options: {
-            ...axisOpts,
-            scales: {
-              ...axisOpts.scales,
-              y: {
-                ...axisOpts.scales.y,
-                title: { display: true, text: 'λ (eV)', font: { size: 11 }, color: '#000' }
-              }
-            }
-          }
-        });
-
-        const head = ['System', 'Δn', '<i>Q</i><sub>0</sub>', '<i>Q</i><sub>target</sub>', '<i>Q</i><sub>ach.</sub>', 'λ (eV)', '<i>E</i><sub>CDFT</sub> (eV)'];
-        const keys = ['title', 'dn', 'Q0', 'Q_target', 'Q_achieved', 'lambda_eV', 'E_cdft'];
-        let t = '<thead><tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
-        systems.forEach(s => s.scan.forEach(r => {
-          t += '<tr>';
-          keys.forEach(c => {
-            const v = c === 'title' ? s.title : r[c];
-            if (typeof v === 'number') t += `<td>${v.toFixed(4)}</td>`;
-            else t += `<td>${v}</td>`;
-          });
-          t += '</tr>';
-        }));
-        document.getElementById('full-table').innerHTML = t + '</tbody>';
-      })
-      .catch(e => {
-        document.querySelector('.page').innerHTML =
-          '<p style="color:#c00000">Failed to load data.json: ' + e + '</p>';
+      // Table 1 — copy values
+      let t1 = '<thead><tr><th>System</th><th><i>Q</i><sub>0</sub> (copy this)</th><th>Example <code>charges</code> for Δn = 1</th></tr></thead><tbody>';
+      systems.forEach(s => {
+        const q = s.Q0;
+        t1 += `<tr><td>${s.title}</td><td><b>${q.toFixed(6)}</b></td><td><code>[${(q - 1).toFixed(6)}]</code></td></tr>`;
       });
+      document.getElementById('q0-copy').innerHTML = t1 + '</tbody>';
+
+      // Update code snippet with first system as example
+      const q0ex = systems[0].Q0;
+      document.getElementById('code-snippet').textContent =
+`# After q0.json is written for a given structure:
+Q0 = ${q0ex.toFixed(6)}   # from work/<label>/q0.json → field "Q"
+dn = 1.0                 # extra electrons on Pt6 (choose 0 … 2)
+cdft = CDFT(
+    calc=calc,
+    atoms=atoms,
+    charge_regions=[pt_indices],  # six Pt atoms
+    charges=[Q0 - dn],            # ← set this number
+    charge_coefs=[0.0],           # λ starts at 0; CDFT finds λ
+)`;
+
+      // Fig 1 — error bars
+      const labels = systems.map(s => s.title.replace(', ', '\n'));
+      new Chart(document.getElementById('chart-err'), {
+        type: 'bar',
+        data: {
+          labels: systems.map(s => s.title),
+          datasets: [
+            {
+              label: 'Failed Q₀ (wrong weight)',
+              data: fail.map(f => f.error_dn0),
+              backgroundColor: 'rgba(207,34,46,0.75)',
+              borderColor: '#cf222e',
+              borderWidth: 1,
+            },
+            {
+              label: 'Success Q₀ (CDFT-consistent)',
+              data: systems.map(s => Math.max(s.error_dn0, 1e-4)),
+              backgroundColor: 'rgba(17,17,17,0.85)',
+              borderColor: '#111',
+              borderWidth: 1,
+            }
+          ]
+        },
+        options: {
+          ...axis('', '|Error| at Δn = 0 (e⁻)'),
+          scales: {
+            ...axis('', '|Error| at Δn = 0 (e⁻)').scales,
+            y: {
+              ...axis('', '|Error| at Δn = 0 (e⁻)').scales.y,
+              type: 'logarithmic',
+              min: 1e-4,
+              title: { display: true, text: '|Error| at Δn = 0 (e⁻, log)', font: { size: 11 }, color: '#111' }
+            },
+            x: {
+              ticks: { color: '#111', maxRotation: 45, minRotation: 30, font: { size: 8 } },
+              grid: { display: false },
+              border: { color: '#111' }
+            }
+          }
+        }
+      });
+
+      // Fig 2 — Q0 wrong vs true
+      new Chart(document.getElementById('chart-q0'), {
+        type: 'bar',
+        data: {
+          labels: systems.map(s => s.title),
+          datasets: [
+            {
+              label: 'Wrong Q₀ (not for input)',
+              data: fail.map(f => f.Q0_wrong),
+              backgroundColor: 'rgba(207,34,46,0.35)',
+              borderColor: '#cf222e',
+              borderWidth: 1.5,
+            },
+            {
+              label: 'True Q₀ (use in charges=[])',
+              data: systems.map(s => s.Q0),
+              backgroundColor: 'rgba(17,17,17,0.85)',
+              borderColor: '#111',
+              borderWidth: 1.5,
+            }
+          ]
+        },
+        options: {
+          ...axis('', 'Q₀'),
+          scales: {
+            y: {
+              title: { display: true, text: 'Q₀ (net charge on Pt₆)', font: { size: 11 }, color: '#111' },
+              ticks: { color: '#111' },
+              grid: { color: '#e8e8e8' },
+              border: { color: '#111' },
+              suggestedMin: 25,
+              suggestedMax: 40,
+            },
+            x: {
+              ticks: { color: '#111', maxRotation: 45, minRotation: 30, font: { size: 8 } },
+              grid: { display: false },
+              border: { color: '#111' }
+            }
+          }
+        }
+      });
+
+      // Table 2
+      let t2 = '<thead><tr><th>System</th><th>Wrong <i>Q</i><sub>0</sub></th><th>True <i>Q</i><sub>0</sub></th><th>|Error|<sub>fail</sub></th><th>|Error|<sub>ok</sub></th><th>λ(0) ok</th></tr></thead><tbody>';
+      systems.forEach((s, i) => {
+        const f = fail[i];
+        t2 += `<tr><td>${s.title}</td><td>${f.Q0_wrong.toFixed(3)}</td><td><b>${s.Q0.toFixed(3)}</b></td>` +
+          `<td style="color:#cf222e">${f.error_dn0.toFixed(1)}</td>` +
+          `<td style="color:#1a7f37">${s.error_dn0.toExponential(1)}</td>` +
+          `<td style="color:#1a7f37">${s.lambda_dn0.toFixed(3)}</td></tr>`;
+      });
+      document.getElementById('cmp-table').innerHTML = t2 + '</tbody>';
+
+      // Fig 3 ΔE
+      const dns = systems[0].scan.map(r => r.dn);
+      new Chart(document.getElementById('chart-e'), {
+        type: 'line',
+        data: {
+          labels: dns,
+          datasets: systems.map((s, i) => {
+            const e0 = s.scan.find(r => r.dn === 0).E_cdft;
+            return {
+              label: s.title,
+              data: s.scan.map(r => +(r.E_cdft - e0).toFixed(4)),
+              borderColor: COLORS[i],
+              backgroundColor: 'transparent',
+              borderDash: DASHES[i],
+              borderWidth: 1.75,
+              tension: 0,
+              pointRadius: 3.5,
+              pointBackgroundColor: COLORS[i],
+            };
+          })
+        },
+        options: {
+          ...axis('Δn (e⁻ on Pt₆)', 'ΔE (eV)'),
+          scales: {
+            ...axis('Δn (e⁻ on Pt₆)', 'ΔE (eV)').scales,
+            y: {
+              ...axis('Δn (e⁻ on Pt₆)', 'ΔE (eV)').scales.y,
+              min: 0,
+              suggestedMax: 9,
+            }
+          }
+        }
+      });
+
+      // Fig 4 λ
+      new Chart(document.getElementById('chart-lam'), {
+        type: 'line',
+        data: {
+          labels: dns,
+          datasets: systems.map((s, i) => ({
+            label: s.title,
+            data: s.scan.map(r => +r.lambda_eV.toFixed(4)),
+            borderColor: COLORS[i],
+            backgroundColor: 'transparent',
+            borderDash: DASHES[i],
+            borderWidth: 1.75,
+            tension: 0,
+            pointRadius: 3.5,
+            pointBackgroundColor: COLORS[i],
+          }))
+        },
+        options: axis('Δn (e⁻ on Pt₆)', 'λ (eV)')
+      });
+
+      // Table 3
+      const head = ['System', 'Δn', 'Q₀', 'Q_target', 'Q_ach.', 'λ (eV)', 'E_CDFT (eV)'];
+      const keys = ['title', 'dn', 'Q0', 'Q_target', 'Q_achieved', 'lambda_eV', 'E_cdft'];
+      let t3 = '<thead><tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+      systems.forEach(s => s.scan.forEach(r => {
+        t3 += '<tr>';
+        keys.forEach(c => {
+          const v = c === 'title' ? s.title : r[c];
+          t3 += typeof v === 'number' ? `<td>${v.toFixed(4)}</td>` : `<td>${v}</td>`;
+        });
+        t3 += '</tr>';
+      }));
+      document.getElementById('full-table').innerHTML = t3 + '</tbody>';
+    });
   </script>
 </body>
 </html>

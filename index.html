@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Constrained DFT: safely adding electrons to Pt₆ on STO</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/3dmol@2.4.2/build/3Dmol-min.js"></script>
   <style>
     :root {
       --bg: #fff;
@@ -186,6 +187,63 @@
     .comments-box ol { margin: 6pt 0 10pt 18pt; padding: 0; font-size: 10pt; }
     .comments-box li { margin-bottom: 4pt; }
     #giscus-thread { margin-top: 10pt; background: #fff; padding: 8pt; border: 1px solid var(--hair); }
+
+    /* --- CDFT optimization section --- */
+    .status-grid td.ok { color: var(--ok); }
+    .status-grid td.run { color: #9a6700; font-style: italic; }
+    .status-grid td.miss { color: var(--muted); }
+    .viewer {
+      border: 1.5px solid var(--rule);
+      margin: 12pt 0 4pt;
+      background: #fff;
+    }
+    .viewer .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6pt 14pt;
+      align-items: center;
+      padding: 7pt 10pt;
+      border-bottom: 1px solid var(--hair);
+      font-size: 9.5pt;
+      background: var(--panel);
+    }
+    .viewer .bar label { white-space: nowrap; }
+    .viewer select, .viewer button {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 9.5pt;
+      border: 1px solid #888;
+      background: #fff;
+      color: #111;
+      padding: 2pt 5pt;
+    }
+    .viewer button { cursor: pointer; min-width: 26pt; }
+    .viewer button:hover { background: #eee; }
+    .viewer button.primary { background: #111; color: #fff; border-color: #111; font-weight: bold; }
+    #v3d { position: relative; width: 100%; height: 470px; }
+    .viewer .player {
+      display: flex;
+      gap: 8pt;
+      align-items: center;
+      padding: 7pt 10pt;
+      border-top: 1px solid var(--hair);
+      font-size: 9.5pt;
+    }
+    .viewer .player input[type=range] { flex: 1; accent-color: #111; }
+    .viewer .readout {
+      padding: 4pt 10pt 6pt;
+      font-size: 9.5pt;
+      border-top: 1px solid var(--hair);
+      min-height: 18pt;
+    }
+    .viewer .mini { padding: 4pt 8pt 6pt; border-top: 1px solid var(--hair); }
+    .viewer .mini canvas { max-height: 150px; cursor: crosshair; }
+    .legend-el { display: inline-flex; gap: 10pt; flex-wrap: wrap; font-size: 9pt; }
+    .legend-el i {
+      display: inline-block; width: 9pt; height: 9pt; border-radius: 50%;
+      border: 0.5pt solid #555; vertical-align: -1pt; margin-right: 3pt;
+    }
+    .findings { border-left: 3px solid var(--rule); padding: 2pt 0 2pt 10pt; margin: 10pt 0; }
+    .findings p { margin-bottom: 6pt; }
   </style>
   <!-- Hypothesis: select any text → annotate; synced live for all visitors -->
   <script type="application/json" class="js-hypothesis-config">
@@ -209,7 +267,7 @@
     <header>
       <p class="kicker">SrTiO₃ · Pt cocatalyst · constrained DFT</p>
       <h1>How to add electrons safely to interfacial Pt<sub>6</sub>: measuring <i>Q</i><sub>0</sub> first, then setting <i>Q</i>&nbsp;=&nbsp;<i>Q</i><sub>0</sub>&nbsp;−&nbsp;Δ<i>n</i></h1>
-      <p class="meta">GPAW CDFT fixed-geometry scan · updated 29 September 2026</p>
+      <p class="meta">GPAW CDFT fixed-geometry scan + CDFT geometry optimization · updated <span id="opt-updated">9 October 2026</span></p>
       <p class="abstract"><b>Abstract.</b>
         Extra electrons on Pt are imposed with GPAW CDFT by constraining the Pt<sub>6</sub> net charge
         <i>Q</i>&nbsp;=&nbsp;<i>Z</i>&nbsp;−&nbsp;<i>N</i><sub>e</sub>.
@@ -217,6 +275,8 @@
         <i>Q</i><sub>0</sub>. Targets are then <i>Q</i>&nbsp;=&nbsp;<i>Q</i><sub>0</sub>&nbsp;−&nbsp;Δ<i>n</i>.
         An incorrect <i>Q</i><sub>0</sub> (inconsistent CDFT weight) left residuals of ~17–54&nbsp;e<sup>−</sup> already at Δ<i>n</i>&nbsp;=&nbsp;0 and mostly crashed;
         the corrected protocol gives λ(0)&nbsp;=&nbsp;0 and a complete Δ<i>n</i>&nbsp;=&nbsp;0→2 scan for all six models.
+        Geometry optimization under the constraint (Δ<i>n</i>&nbsp;=&nbsp;0.1–2.0) is shown in an interactive trajectory viewer
+        (<a href="#opt">§ CDFT geometry optimization</a>).
       </p>
     </header>
 
@@ -284,6 +344,109 @@ cdft = CDFT(
     <p class="cap"><b>Table 3 |</b> Full successful scan.</p>
     <div style="overflow-x:auto;"><table id="full-table"></table></div>
 
+    <section id="opt">
+      <h2>CDFT geometry optimization with extra electrons on Pt<sub>6</sub></h2>
+      <p>
+        Each structure was relaxed (BFGS, <i>f</i><sub>max</sub>&nbsp;&lt;&nbsp;0.05&nbsp;eV&nbsp;Å<sup>−1</sup>, PBE+U+D3, bottom layers fixed)
+        while CDFT held the Pt<sub>6</sub> charge at <i>Q</i>&nbsp;=&nbsp;<i>Q</i><sub>0</sub>&nbsp;−&nbsp;Δ<i>n</i>.
+        Each Δ<i>n</i> starts from the optimized geometry of the previous (smaller) Δ<i>n</i>.
+        <span id="opt-progress"></span>
+      </p>
+
+      <p class="cap"><b>Table 4 |</b> Optimization status. ✓&nbsp;=&nbsp;converged (number of BFGS steps). Italic&nbsp;=&nbsp;still running (steps so far, current <i>f</i><sub>max</sub> in eV&nbsp;Å<sup>−1</sup>).</p>
+      <div style="overflow-x:auto;"><table id="opt-status" class="status-grid"></table></div>
+
+      <figure>
+        <div class="viewer">
+          <div class="bar">
+            <label>System <select id="v-sys"></select></label>
+            <label>Trajectory <select id="v-traj"></select></label>
+            <label>Style
+              <select id="v-style">
+                <option value="bs">Ball &amp; stick</option>
+                <option value="sf">Space-filling</option>
+                <option value="lic">Licorice</option>
+              </select>
+            </label>
+          </div>
+          <div class="bar">
+            <label><input type="checkbox" id="v-solvent" checked /> Solvent (H<sub>2</sub>O / KOH)</label>
+            <label><input type="checkbox" id="v-cell" checked /> Unit cell</label>
+            <label><input type="checkbox" id="v-rep" /> 2×2 supercell</label>
+            <label><input type="checkbox" id="v-label" /> Label Pt</label>
+            <span style="display:flex;gap:4pt;">
+              <button type="button" id="v-side" title="Look along the surface (z up)">Side view</button>
+              <button type="button" id="v-top" title="Look down the surface normal">Top view</button>
+              <button type="button" id="v-dl" title="Download all frames as extended XYZ">Download .xyz</button>
+            </span>
+          </div>
+          <div id="v3d"></div>
+          <div class="player">
+            <button type="button" id="v-first" title="First frame">⏮</button>
+            <button type="button" id="v-prev" title="Previous frame">◀</button>
+            <button type="button" id="v-play" class="primary" title="Play / pause">▶ Play</button>
+            <button type="button" id="v-next" title="Next frame">▶</button>
+            <button type="button" id="v-last" title="Last frame">⏭</button>
+            <input type="range" id="v-slider" min="0" max="0" value="0" step="1" aria-label="Frame" />
+            <label>Speed
+              <select id="v-speed">
+                <option value="2">2 fps</option>
+                <option value="5">5 fps</option>
+                <option value="10" selected>10 fps</option>
+                <option value="20">20 fps</option>
+              </select>
+            </label>
+            <label><input type="checkbox" id="v-loop" checked /> Loop</label>
+          </div>
+          <div class="readout" id="v-readout">Loading…</div>
+          <div class="mini"><canvas id="v-chart" height="120"></canvas></div>
+          <div class="bar" style="border-top:1px solid var(--hair);border-bottom:none;">
+            <span class="legend-el" id="v-legend"></span>
+          </div>
+        </div>
+        <figcaption><b>Fig. 5 |</b> Interactive optimization trajectories. Drag to rotate, scroll to zoom, right-drag (or Ctrl-drag) to pan.
+          Choose a system and either one Δ<i>n</i> optimization (frames&nbsp;=&nbsp;BFGS steps) or the <i>Δn series</i>
+          (frames&nbsp;=&nbsp;neutral relaxed structure followed by the optimized structure at each converged Δ<i>n</i>).
+          The trace below the viewer shows energy relative to the first frame and <i>f</i><sub>max</sub>; click it to jump to a frame.
+          Pt is drawn enlarged in gold.</figcaption>
+      </figure>
+
+      <div class="findings" id="opt-findings">
+        <p><b>Key observations.</b></p>
+        <p><b>(i) Relaxation removes most of the cost of adding electrons.</b>
+          At fixed geometry, Δ<i>n</i>&nbsp;=&nbsp;2 costs 6–8&nbsp;eV and needs |λ|&nbsp;≈&nbsp;6–8&nbsp;eV.
+          After relaxation, the cost is below ~0.8&nbsp;eV and |λ|&nbsp;&lt;&nbsp;0.9&nbsp;eV, with Pt moving only ~0.1–0.2&nbsp;Å in most systems.
+          Because the CDFT weight that defines “the charge on Pt<sub>6</sub>” depends on atomic positions, part of this drop may come from
+          the geometry changing the partition rather than from electrons moving. This can be tested by repeating the λ&nbsp;=&nbsp;0 <i>Q</i><sub>0</sub> probe on an optimized geometry.</p>
+        <p><b>(ii) Vo-interface, vacuum: the Pt<sub>6</sub> cluster reshapes at Δ<i>n</i>&nbsp;≥&nbsp;1.</b>
+          One apex Pt atom drops by ~1.2&nbsp;Å and shifts sideways (2.0&nbsp;Å total), flattening the cluster onto the surface;
+          the energy falls ~1&nbsp;eV <i>below</i> the neutral reference. Watch the Δ<i>n</i>&nbsp;=&nbsp;1.0 trajectory.</p>
+        <p><b>(iii) Pristine, H<sub>2</sub>O: the water network rearranges.</b>
+          Pt hardly moves (&lt;&nbsp;0.1&nbsp;Å) but solvent atoms move by 1.0–1.5&nbsp;Å and the energy drops 0.4–0.8&nbsp;eV below the neutral reference.
+          This means the neutral water configuration was not the lowest minimum; such drops should not be read as an effect of the extra electrons.</p>
+      </div>
+
+      <div class="two">
+        <figure>
+          <div class="chart-box"><canvas id="chart-opt-e" height="240"></canvas></div>
+          <figcaption><b>Fig. 6 |</b> Energy cost of adding Δ<i>n</i> electrons, relative to the neutral relaxed structure (DFT+D3).
+            Solid: after CDFT geometry optimization. Faint dashed: same Δ<i>n</i> at the fixed neutral geometry (Fig.&nbsp;3, D3 added for consistency).</figcaption>
+        </figure>
+        <figure>
+          <div class="chart-box"><canvas id="chart-opt-lam" height="240"></canvas></div>
+          <figcaption><b>Fig. 7 |</b> Lagrange multiplier λ needed to hold the charge. Solid: after optimization. Faint dashed: fixed geometry (Fig.&nbsp;4).</figcaption>
+        </figure>
+      </div>
+      <figure>
+        <div class="chart-box"><canvas id="chart-opt-disp" height="200"></canvas></div>
+        <figcaption><b>Fig. 8 |</b> Largest Pt displacement from the neutral relaxed structure (log scale). Values ≳&nbsp;0.5&nbsp;Å indicate a change in cluster shape rather than a small relaxation.</figcaption>
+      </figure>
+
+      <p class="cap"><b>Table 5 |</b> Converged CDFT optimizations. Δ<i>E</i> is relative to the neutral relaxed structure (DFT+D3).
+        Max&nbsp;|d|: largest displacement from the neutral structure for Pt and for solvent atoms.</p>
+      <div style="overflow-x:auto;"><table id="opt-table"></table></div>
+    </section>
+
     <section class="comments-box" id="comments">
       <h2>Comments &amp; annotations</h2>
       <p style="text-align:left;margin-bottom:6pt;">Two ways to leave feedback (anyone can join):</p>
@@ -313,7 +476,8 @@ cdft = CDFT(
     </section>
 
     <footer>
-      Data: <code>31-Pt-DEDL-CDFT/work/*/q0.json</code>, <code>cdft_scan.csv</code>.
+      Data: <code>31-Pt-DEDL-CDFT/work/*/q0.json</code>, <code>cdft_scan.csv</code>, <code>cdft_opt_scan.csv</code>, <code>cdft_opt_dn*.traj</code> (exported by <code>build_report_opt.py</code>).
+      3D viewer: <a href="https://3dmol.csb.pitt.edu/" target="_blank" rel="noopener">3Dmol.js</a>.
       Failure residuals from first CDFT campaign logs (wrong weight / <i>Q</i><sub>0</sub>).
       Pages: <a href="https://jiaaowang-ut.github.io/sto-31-pt-cdft-results/">jiaaowang-ut.github.io/sto-31-pt-cdft-results</a>
     </footer>
@@ -563,5 +727,6 @@ cdft = CDFT(
       document.getElementById('full-table').innerHTML = t3 + '</tbody>';
     });
   </script>
+  <script src="opt.js"></script>
 </body>
 </html>

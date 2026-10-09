@@ -263,7 +263,6 @@
     v[4] = q[0]; v[5] = q[1]; v[6] = q[2]; v[7] = q[3];
     viewer.setView(v);
     viewer.zoomTo();
-    viewer.zoom(1.6);
     if ($('v-cell').checked) drawCell();
     viewer.render();
   }
@@ -444,7 +443,7 @@
       return;
     }
     try {
-      viewer = $3Dmol.createViewer($('v3d'), { backgroundColor: 'white', antialias: true, orthographic: true });
+      viewer = $3Dmol.createViewer($('v3d'), { backgroundColor: 'white', antialias: true });
     } catch (e) {
       viewer = null;
     }

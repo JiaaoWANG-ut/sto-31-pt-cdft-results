@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K+ and electrons on Pt</title>
+<script src="3Dmol-min.js"></script>
+<style>
+  :root { --ink:#1c1917; --muted:#57534e; --line:#e7e5e4; --bg:#f6f3ee; --blue:#1d4ed8; --orange:#c2410c; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif SC",serif; }
+  .slide { display:none; min-height:100vh; padding:8vh 8vw 12vh; }
+  .slide.on { display:flex; flex-direction:column; justify-content:center; }
+  .dark { background:#1c1917; color:#f5f0e8; }
+  .dark .en { color:#d6d3d1; }
+  h1 { font-size:clamp(36px, 5vw, 64px); font-weight:560; line-height:1.15; margin:0 0 0.35em; letter-spacing:-0.02em; }
+  h2 { font-size:clamp(28px, 3.4vw, 44px); font-weight:560; line-height:1.2; margin:0 0 0.6em; }
+  .en { font-family:"Avenir Next","Segoe UI",sans-serif; font-size:0.42em; font-weight:450; letter-spacing:0; color:var(--muted); display:block; margin-top:0.35em; line-height:1.35; }
+  h2 .en, .lead .en { font-size:0.55em; }
+  .lead { font-size:clamp(22px, 2.2vw, 30px); line-height:1.45; max-width:18em; margin:0.2em 0; }
+  .kicker { font-family:"Avenir Next","Segoe UI",sans-serif; font-size:14px; letter-spacing:0.12em; text-transform:uppercase; color:#a8a29e; margin-bottom:1.2em; }
+  ul { margin:0.2em 0 0; padding:0; list-style:none; max-width:36em; }
+  li { font-size:clamp(20px, 2vw, 28px); line-height:1.35; margin:0.55em 0; padding-left:0.9em; border-left:3px solid var(--ink); }
+  .dark li { border-left-color:#f5f0e8; }
+  .nums { display:flex; gap:4vw; flex-wrap:wrap; align-items:flex-end; }
+  .num b { display:block; font-size:clamp(48px, 6vw, 84px); font-weight:560; letter-spacing:-0.03em; line-height:0.95; }
+  .num span { display:block; margin-top:0.45em; font-size:20px; max-width:10em; }
+  .neg { color:#166534; } .pos { color:var(--orange); }
+  .fig { max-width:100%; max-height:62vh; object-fit:contain; background:#fff; border:1px solid var(--line); }
+  .nav { position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-between; align-items:center; padding:14px 8vw 18px; font-family:"Avenir Next","Segoe UI",sans-serif; font-size:13px; color:#a8a29e; }
+  .dark-nav { color:#a8a29e; }
+  button { font:inherit; background:#1c1917; color:#f5f0e8; border:0; padding:8px 14px; cursor:pointer; }
+  button.ghost { background:transparent; color:inherit; border:1px solid #d6d3d1; }
+  .dots { display:flex; gap:8px; }
+  .dots i { width:7px; height:7px; border-radius:50%; background:#d6d3d1; display:block; }
+  .dots i.on { background:#1c1917; }
+  .stage { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(240px,0.7fr); gap:28px; align-items:center; width:100%; }
+  #viewer { height:62vh; min-height:360px; background:#fff; border:1px solid var(--line); position:relative; }
+  .panel { font-family:"Avenir Next","Segoe UI",sans-serif; }
+  .panel h2 { font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC",serif; }
+  .dn { font-size:42px; letter-spacing:-0.03em; }
+  .sum { font-size:18px; margin:6px 0 14px; }
+  .bar { display:grid; grid-template-columns:52px 1fr 52px; gap:8px; align-items:center; margin:5px 0; font-size:13px; }
+  .track { height:8px; background:#e7e5e4; }
+  .fill { height:8px; background:var(--blue); }
+  .controls { display:flex; gap:10px; align-items:center; margin-top:16px; }
+  input[type=range] { flex:1; }
+  .legend { display:flex; gap:16px; margin-top:12px; font-size:13px; color:var(--muted); }
+  .sw { display:inline-block; width:10px; height:10px; margin-right:6px; vertical-align:middle; }
+  .note { font-family:"Avenir Next","Segoe UI",sans-serif; font-size:13px; color:var(--muted); margin-top:10px; }
+  @media (max-width:800px) { .stage { grid-template-columns:1fr; } #viewer { height:46vh; } }
+</style>
+</head>
+<body>
+<section class="slide dark on" data-i="0">
+  <div class="kicker">Fixed-geometry CDFT · pristine STO / Pt6 / KOH</div>
+  <h1>K+ 会把电子留在 Pt 上吗<span class="en">Does K+ keep the extra electrons on Pt?</span></h1>
+  <p class="lead">看电荷落在哪，以及 K+ 让它便宜了多少。<span class="en">Where the charge sits, and how much K+ lowers the energy.</span></p>
+</section>
+
+<section class="slide" data-i="1">
+  <h2>做法<span class="en">The calculation</span></h2>
+  <ul>
+    <li>原子停在基态结构上，只把电子约束到 Pt6。<span class="en">Atoms stay at the ground-state geometry. Only the electrons are constrained onto Pt6.</span></li>
+    <li>从 0 加到 2 个电子。用 Bader 看它们落在哪个原子。<span class="en">Add 0 to 2 electrons. Bader charges show which atom receives them.</span></li>
+    <li>用静电势估计每个离子的能量贡献。<span class="en">The electrostatic potential gives each ion’s energy contribution.</span></li>
+  </ul>
+</section>
+
+<section class="slide" data-i="2">
+  <div class="stage">
+    <div>
+      <div id="viewer"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:#1d4ed8"></i>得到电子 gained</span>
+        <span><i class="sw" style="background:#d4a017"></i>Pt，中性时 neutral Pt</span>
+        <span><i class="sw" style="background:#c2410c"></i>失去电子 lost</span>
+        <span><i class="sw" style="background:#7c3aed"></i>K+</span>
+      </div>
+      <p class="note">拖动旋转。蓝色越深，这个 Pt 上多的电子越多。K+ 保持紫色：它不提供电子。<span class="en">Drag to rotate. Deeper blue means more extra electrons on that Pt. K+ stays purple: it does not donate the electrons.</span></p>
+    </div>
+    <div class="panel">
+      <div class="kicker">pristine-KOH · Bader</div>
+      <div class="dn" id="dn">dn = 0</div>
+      <div class="sum" id="sum">Pt6 多出的电子 0</div>
+      <div id="bars"></div>
+      <div class="sum" id="kline"></div>
+      <div class="controls">
+        <button id="play" type="button">播放 Play</button>
+        <input id="slider" type="range" min="0" max="4" value="0" step="1">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-i="3">
+  <h2>K+ 在稳定，OH- 在抵消<span class="en">K+ stabilizes. OH- cancels most of it.</span></h2>
+  <div class="nums">
+    <div class="num"><b class="neg">−1.0</b><span>eV / 每个多余电子<br>两个 K+<span class="en">per extra electron, two K+</span></span></div>
+    <div class="num"><b class="pos">+0.76</b><span>eV / 每个多余电子<br>吸附的 OH-<span class="en">per extra electron, adsorbed OH-</span></span></div>
+    <div class="num"><b>−0.32</b><span>eV / 每个多余电子<br>K+ + OH- + 水<span class="en">per extra electron, K+ + OH- + water</span></span></div>
+  </div>
+  <p class="note">dn = 2，pristine-KOH。每个 K+ 大约 −0.5 eV。<span class="en">At dn = 2. About −0.5 eV per K+.</span></p>
+</section>
+
+<section class="slide" data-i="4">
+  <h2>总能量几乎看不出差别<span class="en">The total energy barely differs.</span></h2>
+  <img class="fig" src="k_surface_potential.png" alt="K+ energy, force, and total charging energy">
+</section>
+
+<section class="slide" data-i="5">
+  <h2>可以怎么说<span class="en">What can be said</span></h2>
+  <ul>
+    <li>可以说：K+ 是反离子，能稳定 Pt 上的负电荷。<span class="en">You can say: K+ is a counter-ion and stabilizes the negative charge on Pt.</span></li>
+    <li>不能说：所以 KOH 比纯水更能把电子留在 Pt 上。<span class="en">You cannot say: therefore KOH holds electrons on Pt better than pure water.</span></li>
+    <li>因为模型里 Pt 上的 OH- 把 K+ 抵消了，总充电能和纯水几乎一样。<span class="en">OH- on Pt cancels K+. The total charging energy matches pure water.</span></li>
+  </ul>
+</section>
+
+<div class="nav">
+  <span id="hint">← →</span>
+  <div class="dots" id="dots"></div>
+  <span id="count">1 / 6</span>
+</div>
+<script>
+const DATA = {"symbols":["H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","H","K","K","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","O","Pt","Pt","Pt","Pt","Pt","Pt","Sr","Sr","Sr","Sr","Sr","Sr","Sr","Sr","Sr","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti","Ti"],"pos":[[8.013,0.847,11.663],[0.486,6.081,10.123],[11.098,4.07,13.043],[10.709,5.542,13.402],[4.738,6.868,11.033],[4.454,6.571,9.445],[0.56,4.608,15.866],[1.791,5.502,15.586],[4.73,1.198,10.352],[4.319,2.823,9.027],[3.91,10.549,15.918],[4.681,10.685,14.569],[1.878,7.669,10.962],[2.755,6.451,10.421],[1.893,7.741,13.186],[11.503,5.347,11.396],[1.499,9.187,12.767],[2.741,4.559,13.598],[10.504,7.439,16.622],[4.141,7.777,12.98],[4.119,8.709,11.674],[5.764,0.719,13.617],[4.215,0.601,13.651],[7.291,9.418,16.615],[6.015,9.639,15.71],[7.706,1.519,14.477],[7.375,2.457,13.245],[10.511,11.475,12.87],[10.871,0.029,11.359],[7.082,7.263,15.77],[6.872,5.7,15.51],[3.309,4.399,15.824],[11.393,2.697,14.807],[-0.002,6.803,15.856],[4.967,10.578,10.267],[0.137,2.192,16.212],[1.426,4.805,12.809],[8.637,6.361,14.814],[9.949,7.165,14.441],[8.023,9.723,9.34],[8.017,8.273,9.922],[0.768,10.492,14.263],[2.224,3.665,10.889],[0.884,3.985,10.149],[2.928,10.52,10.784],[3.219,9.557,9.589],[3.574,8.14,14.976],[3.411,6.51,14.812],[8.1,10.678,14.894],[8.5,11.384,13.531],[0.804,11.224,12.898],[10.723,1.82,12.893],[6.482,11.147,10.679],[9.536,2.866,12.952],[10.01,8.023,11.328],[11.376,8.408,11.989],[6.3,3.692,14.756],[10.579,10.174,10.287],[8.726,11.288,11.124],[5.0,4.69,14.899],[2.227,0.305,14.234],[2.17,1.782,14.751],[11.243,9.311,15.579],[10.425,10.572,15.092],[0.611,11.515,9.967],[1.59,1.044,10.045],[7.025,9.145,12.623],[4.908,4.081,12.122],[3.571,9.83,10.513],[2.787,1.033,14.622],[1.587,0.061,10.007],[10.414,2.616,13.417],[8.766,11.28,14.482],[3.271,7.426,14.382],[11.306,10.289,15.429],[1.706,3.409,10.09],[0.267,3.62,7.819],[7.965,9.218,10.189],[9.324,6.494,14.063],[2.361,4.531,12.658],[8.061,11.573,11.798],[2.336,3.601,5.954],[10.575,11.123,10.007],[2.246,1.646,7.815],[1.402,10.699,13.505],[6.008,4.628,14.697],[6.953,1.987,14.059],[5.746,11.187,10.03],[2.306,7.563,5.99],[7.51,6.393,15.897],[11.123,0.293,12.329],[6.99,9.365,15.693],[5.03,0.074,13.43],[4.676,8.057,12.183],[11.056,7.587,15.836],[3.465,4.931,15.027],[1.425,8.231,12.465],[2.04,7.076,10.159],[4.472,10.025,15.32],[4.838,2.165,10.429],[0.909,5.516,16.039],[4.697,6.117,10.363],[11.418,5.02,12.953],[11.58,5.354,10.385],[0.4,2.788,15.49],[10.532,8.792,11.657],[0.3,3.601,3.951],[8.111,11.236,8.057],[2.337,9.437,8.17],[6.036,7.429,5.929],[10.168,3.564,5.909],[6.214,5.546,7.928],[10.064,1.65,3.951],[8.11,3.604,3.948],[4.205,11.412,3.948],[6.157,9.46,3.949],[10.062,5.555,3.948],[8.11,7.508,3.949],[10.09,1.603,8.089],[4.205,7.508,3.949],[6.069,9.444,7.751],[6.157,1.65,3.952],[2.33,5.503,7.858],[6.158,5.556,3.949],[8.128,3.613,7.419],[9.957,11.439,5.949],[4.244,7.395,8.187],[6.261,1.627,7.982],[4.191,11.45,7.807],[5.951,3.604,5.95],[4.234,3.474,8.248],[0.3,11.415,3.951],[2.253,9.46,3.948],[8.113,7.606,7.643],[0.3,7.508,3.952],[0.305,7.425,7.916],[2.251,1.65,3.951],[6.209,11.471,5.949],[10.142,9.411,7.866],[9.998,5.542,7.911],[10.134,7.444,5.923],[0.302,11.378,7.597],[2.253,5.555,3.948],[8.11,11.412,3.948],[2.296,11.325,5.918],[4.205,3.604,3.948],[10.062,9.46,3.948],[6.931,5.901,9.944],[9.389,5.75,9.884],[9.36,2.326,9.927],[6.867,2.31,9.966],[8.24,6.274,12.09],[8.105,3.727,11.624],[8.116,9.521,5.883],[8.116,5.596,5.816],[0.286,9.476,5.86],[4.183,1.638,5.892],[0.321,5.547,5.871],[4.171,5.568,5.845],[0.289,1.627,5.865],[4.19,9.489,5.87],[8.12,1.595,5.828],[10.062,11.412,4.038],[10.051,7.55,7.854],[6.118,11.371,7.934],[6.177,7.577,7.845],[10.025,3.603,7.855],[6.157,3.602,4.039],[2.253,11.412,4.038],[10.085,11.325,8.028],[2.212,7.489,7.968],[2.145,3.604,7.927],[6.157,11.413,4.039],[2.253,3.603,4.038],[6.158,7.508,4.035],[10.062,3.603,4.038],[10.063,7.508,4.039],[2.207,11.442,7.869],[2.252,7.508,4.039],[6.299,3.64,7.859]],"pt":[147,148,149,150,151,152],"k":[66,67],"frames":[{"dn":"0","gain":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"pt":[0.0,0.0,0.0,0.0,0.0,0.0],"ptSum":0.0,"kCharge":[0.87,0.86]},{"dn":"0.5","gain":[-0.0,-0.003,-0.003,-0.002,-0.004,-0.001,-0.0,-0.0,-0.007,-0.002,0.0,0.0,-0.001,-0.001,-0.0,-0.007,0.0,-0.0,-0.001,-0.0,0.001,-0.001,0.0,0.0,0.0,-0.002,0.003,-0.0,-0.001,-0.001,-0.001,0.0,-0.0,0.0,-0.0,-0.0,-0.0,-0.003,-0.006,0.002,0.001,-0.0,-0.001,-0.002,-0.0,0.001,-0.0,-0.0,-0.0,-0.0,0.0,-0.003,-0.003,0.005,0.001,-0.001,-0.001,-0.001,-0.001,0.0,0.0,-0.0,-0.0,-0.0,-0.002,-0.001,-0.006,-0.009,-0.002,-0.0,-0.0,-0.017,-0.001,-0.0,0.0,-0.002,-0.006,-0.014,-0.008,0.0,-0.012,-0.0,-0.007,-0.001,0.0,-0.006,-0.018,-0.003,0.0,-0.002,-0.003,-0.001,-0.001,-0.006,-0.001,-0.001,0.0,-0.001,-0.0,-0.02,-0.0,-0.013,-0.004,-0.008,-0.001,-0.011,-0.0,-0.009,-0.001,-0.0,-0.001,-0.011,-0.0,-0.0,-0.0,-0.0,-0.0,-0.0,-0.014,-0.0,-0.003,-0.0,-0.001,-0.0,-0.015,-0.0,-0.004,-0.012,-0.002,-0.001,-0.004,-0.0,-0.0,-0.012,0.0,-0.004,-0.0,0.0,-0.003,-0.013,0.0,-0.001,0.0,0.0,0.0,-0.0,-0.0,0.086,0.082,0.099,0.087,0.072,0.056,-0.0,-0.001,0.0,-0.0,-0.0,-0.0,-0.0,0.0,-0.001,0.0,-0.022,-0.008,-0.021,-0.031,-0.001,0.0,-0.008,-0.001,-0.001,-0.0,0.0,-0.0,-0.0,-0.001,-0.001,0.0,-0.033],"pt":[0.086,0.082,0.099,0.087,0.072,0.056],"ptSum":0.482,"kCharge":[0.87,0.87]},{"dn":"1.0","gain":[-0.0,-0.006,-0.006,-0.004,-0.01,-0.005,-0.0,-0.0,-0.015,-0.005,0.0,0.0,-0.006,-0.001,-0.001,-0.013,0.0,-0.001,-0.001,-0.001,0.002,-0.003,0.001,0.001,0.0,-0.003,0.009,-0.0,-0.004,-0.001,-0.002,0.0,-0.001,-0.0,-0.001,-0.0,-0.0,-0.008,-0.01,0.003,0.002,-0.001,-0.002,-0.005,-0.001,0.03,-0.0,-0.0,-0.0,-0.001,0.001,-0.006,-0.007,0.011,0.002,-0.002,-0.002,-0.002,-0.002,0.001,0.0,0.0,-0.0,-0.001,-0.003,-0.002,-0.012,-0.018,-0.032,-0.001,-0.0,-0.037,-0.001,-0.0,0.0,-0.003,-0.014,-0.028,-0.018,0.0,-0.025,-0.0,-0.014,-0.002,-0.0,-0.013,-0.037,-0.006,0.0,-0.003,-0.006,-0.002,-0.001,-0.011,-0.002,-0.002,0.0,0.002,-0.0,-0.041,-0.0,-0.024,-0.01,-0.017,-0.001,-0.023,-0.001,-0.018,-0.002,-0.001,-0.002,-0.025,-0.001,-0.001,-0.0,-0.001,-0.001,-0.0,-0.03,-0.001,-0.005,-0.001,-0.002,-0.001,-0.029,-0.0,-0.009,-0.025,-0.003,-0.001,-0.009,-0.0,-0.001,-0.024,-0.0,-0.009,-0.0,-0.0,-0.006,-0.027,-0.0,-0.002,-0.0,-0.0,-0.0,-0.0,-0.001,0.174,0.165,0.204,0.175,0.146,0.112,-0.0,-0.003,0.001,-0.0,-0.0,-0.001,0.0,0.0,-0.003,0.0,-0.042,-0.016,-0.039,-0.062,-0.001,0.001,-0.015,-0.002,-0.002,-0.0,0.0,-0.0,-0.0,-0.001,-0.002,0.0,-0.061],"pt":[0.174,0.165,0.204,0.175,0.146,0.112],"ptSum":0.976,"kCharge":[0.88,0.87]},{"dn":"1.5","gain":[0.0,-0.009,-0.008,-0.006,-0.015,-0.008,-0.0,-0.0,-0.02,-0.007,0.001,0.0,-0.007,-0.001,-0.002,-0.02,-0.0,-0.001,-0.001,-0.001,0.007,-0.004,0.001,0.001,0.001,-0.004,0.015,-0.001,-0.006,-0.002,-0.005,0.0,-0.001,-0.0,-0.001,-0.001,-0.0,-0.012,-0.014,0.005,0.002,-0.001,-0.003,-0.008,-0.001,0.031,-0.0,-0.001,-0.001,-0.001,0.001,-0.009,-0.011,0.018,0.005,-0.003,-0.003,-0.003,-0.005,0.001,0.0,0.0,0.0,-0.001,-0.004,-0.004,-0.018,-0.025,-0.033,-0.001,-0.001,-0.056,-0.001,-0.0,-0.0,-0.005,-0.021,-0.041,-0.029,0.001,-0.036,-0.001,-0.023,-0.004,0.0,-0.022,-0.056,-0.009,0.0,-0.004,-0.01,-0.003,-0.001,-0.019,-0.003,-0.003,0.0,0.0,-0.001,-0.064,-0.0,-0.036,-0.015,-0.026,-0.002,-0.035,-0.002,-0.027,-0.004,-0.001,-0.004,-0.036,-0.002,-0.002,-0.002,-0.002,-0.002,-0.001,-0.045,-0.002,-0.007,-0.003,-0.003,-0.002,-0.044,-0.001,-0.013,-0.037,-0.005,-0.002,-0.015,-0.002,-0.003,-0.036,-0.001,-0.014,-0.002,0.0,-0.009,-0.038,-0.0,-0.003,-0.001,-0.002,0.0,-0.002,-0.003,0.259,0.246,0.307,0.264,0.222,0.165,-0.0,-0.004,0.001,-0.0,0.0,-0.001,-0.0,0.0,-0.005,0.0,-0.06,-0.023,-0.055,-0.09,-0.001,0.001,-0.022,-0.003,-0.004,0.0,0.001,-0.0,-0.0,-0.001,-0.004,0.0,-0.086],"pt":[0.259,0.246,0.307,0.264,0.222,0.165],"ptSum":1.463,"kCharge":[0.88,0.88]},{"dn":"2.0","gain":[0.002,-0.011,-0.011,-0.008,-0.02,-0.01,-0.0,0.0,-0.026,-0.01,0.001,0.001,-0.008,-0.001,-0.002,-0.026,-0.0,-0.002,-0.002,-0.002,0.008,-0.005,0.001,0.001,0.001,-0.005,0.021,-0.001,-0.007,-0.003,-0.006,0.0,-0.001,-0.0,-0.001,-0.001,-0.0,-0.017,-0.019,0.006,0.003,-0.002,-0.004,-0.01,-0.002,0.032,-0.001,-0.001,-0.001,-0.002,0.001,-0.011,-0.02,0.025,0.006,-0.004,-0.005,-0.004,-0.006,0.002,0.0,0.0,0.0,-0.001,-0.005,-0.005,-0.023,-0.033,-0.034,-0.001,-0.002,-0.077,-0.002,-0.0,-0.0,-0.007,-0.028,-0.057,-0.041,0.001,-0.05,-0.001,-0.031,-0.006,0.001,-0.032,-0.076,-0.007,0.0,-0.006,-0.014,-0.003,-0.002,-0.025,-0.004,-0.005,0.0,-0.002,-0.001,-0.083,-0.0,-0.05,-0.023,-0.038,-0.003,-0.047,-0.004,-0.038,-0.007,-0.001,-0.004,-0.047,-0.004,-0.003,-0.004,-0.004,-0.004,-0.002,-0.06,-0.003,-0.01,-0.004,-0.005,-0.003,-0.058,-0.001,-0.019,-0.05,-0.008,-0.002,-0.019,-0.004,-0.005,-0.047,-0.002,-0.017,-0.004,-0.0,-0.011,-0.049,-0.0,-0.005,-0.003,-0.003,0.0,-0.003,-0.005,0.344,0.33,0.416,0.356,0.3,0.22,-0.0,-0.006,0.001,-0.0,0.0,-0.002,-0.0,0.0,-0.006,0.001,-0.076,-0.029,-0.07,-0.116,-0.001,0.002,-0.028,-0.004,-0.005,0.0,0.001,-0.0,-0.0,-0.0,-0.005,0.001,-0.111],"pt":[0.344,0.33,0.416,0.356,0.3,0.22],"ptSum":1.966,"kCharge":[0.89,0.89]}]};
+const slides = [...document.querySelectorAll(".slide")];
+const dots = document.getElementById("dots");
+slides.forEach((_, i) => {
+  const d = document.createElement("i");
+  d.onclick = () => go(i);
+  dots.appendChild(d);
+});
+let idx = 0;
+function go(i) {
+  idx = (i + slides.length) % slides.length;
+  slides.forEach((s, j) => s.classList.toggle("on", j === idx));
+  [...dots.children].forEach((d, j) => d.classList.toggle("on", j === idx));
+  document.getElementById("count").textContent = (idx + 1) + " / " + slides.length;
+  document.body.style.background = idx === 0 ? "#1c1917" : "#f6f3ee";
+  if (idx === 2) boot();
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(idx + 1); }
+  if (e.key === "ArrowLeft") go(idx - 1);
+});
+let clickX = 0;
+document.addEventListener("pointerdown", (e) => { clickX = e.clientX; });
+document.addEventListener("pointerup", (e) => {
+  if (e.target.closest("button, input, #viewer, .dots")) return;
+  if (Math.abs(e.clientX - clickX) > 8) return;
+  go(e.clientX > innerWidth * 0.72 ? idx + 1 : e.clientX < innerWidth * 0.28 ? idx - 1 : idx);
+});
+
+const CPK = {Pt:[212,160,23], O:[210,70,60], Ti:[120,150,180], Sr:[80,150,90], H:[200,200,200]};
+function mix(a, b, t) { return a.map((v, i) => Math.round(v + (b[i] - v) * t)); }
+function rgb(c) { return "rgb(" + c.join(",") + ")"; }
+function colorOf(sym, g, isPt) {
+  const base = isPt ? CPK.Pt : (CPK[sym] || [170,170,170]);
+  const cap = isPt ? 0.42 : 0.12;
+  let t = Math.max(-1, Math.min(1, g / cap));
+  if (t >= 0) return rgb(mix(base, [29,78,216], t));
+  return rgb(mix(base, [194,65,12], -t));
+}
+let viewer = null, built = false, timer = null;
+function boot() {
+  if (!viewer) {
+    const el = document.getElementById("viewer");
+    void el.offsetWidth;
+    try { viewer = $3Dmol.createViewer(el, {backgroundColor: "white"}); }
+    catch (err) { el.textContent = "3D 视图需要 WebGL。3D view needs WebGL."; return; }
+  }
+  if (!built) {
+    const lines = [String(DATA.symbols.length), "pristine-KOH"];
+    DATA.symbols.forEach((s, i) => lines.push(s + " " + DATA.pos[i].join(" ")));
+    viewer.addModel(lines.join("\n"), "xyz");
+    built = true;
+    showFrame(0, true);
+  } else {
+    viewer.resize();
+    viewer.render();
+  }
+}
+function showFrame(fi, resetCam) {
+  const fr = DATA.frames[fi];
+  document.getElementById("slider").value = fi;
+  document.getElementById("dn").textContent = "dn = " + fr.dn;
+  document.getElementById("sum").innerHTML = "Pt6 多出 " + fr.ptSum.toFixed(2) + " e<span class=\"en\" style=\"font-size:15px\">+" + fr.ptSum.toFixed(2) + " e on Pt6</span>";
+  document.getElementById("kline").innerHTML = "K+ 电荷 " + fr.kCharge.map(x => (x>0?"+":"") + x.toFixed(2)).join(" , ")
+    + "<span class='en' style='font-size:14px'>K stays K+. Charge almost unchanged.</span>";
+  document.getElementById("bars").innerHTML = fr.pt.map((g, n) => {
+    const w = Math.max(2, Math.round(100 * g / 0.42));
+    return '<div class="bar"><span>Pt' + (n+1) + '</span><div class="track"><div class="fill" style="width:' + w + '%"></div></div><span>+' + g.toFixed(2) + '</span></div>';
+  }).join("");
+  if (!viewer) return;
+  DATA.symbols.forEach((sym, a) => {
+    const isPt = DATA.pt.indexOf(a) >= 0;
+    const isK = DATA.k.indexOf(a) >= 0;
+    const col = isK ? "rgb(124,58,237)" : colorOf(sym, fr.gain[a], isPt);
+    const radius = isPt ? 0.62 : isK ? 0.5 : (sym === "H" ? 0.22 : 0.32);
+    viewer.setStyle({index: a}, {sphere: {radius: radius, color: col}});
+  });
+  if (resetCam) { viewer.zoomTo(); viewer.rotate(78, "x"); viewer.zoom(1.15); }
+  viewer.render();
+}
+document.getElementById("slider").oninput = (e) => { stop(); showFrame(+e.target.value, false); };
+function stop() { if (timer) { clearInterval(timer); timer = null; document.getElementById("play").textContent = "播放 Play"; } }
+document.getElementById("play").onclick = () => {
+  if (timer) { stop(); return; }
+  document.getElementById("play").textContent = "暂停 Pause";
+  timer = setInterval(() => {
+    const n = DATA.frames.length;
+    showFrame((+document.getElementById("slider").value + 1) % n, false);
+  }, 1100);
+};
+const parts = (location.hash.slice(1) || "0").split("-");
+go(+parts[0] || 0);
+if (parts.length > 1 && idx === 2) showFrame(+parts[1] || 0, false);
+</script>
+</body>
+</html>
